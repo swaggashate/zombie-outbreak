@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Zombie Outbreak</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <script src="zgame.js" defer></script>
+</head>
+
+<body>
+
+  <div id="game">
+
+    <!-- ========= HEADER ========= -->
+    <header class="top-bar">
+      <div class="wave-info">
+        Wave: <span id="wave-number">1</span>
+        <span id="boss-indicator" class="hidden">⚠ BOSS WAVE</span>
+      </div>
+
+      <div class="player-stats">
+        HP: <span id="player-hp">100</span>
+      </div>
+    </header>
+
+
+    <!-- ========= BATTLE SCREEN ========= -->
+    <section id="battle-screen" class="screen active">
+
+      <div class="battle-area">
+
+        <!-- Background Image -->
+        <div class="battle-background">
+          <!-- Set background-image in CSS -->
+        </div>
+
+        <!-- Zombie Display -->
+        <div class="zombie-container">
+          <img id="zombie-image" src="./assets/classic-zombie.png" alt="Zombie" />
+          <div class="zombie-stats">
+            <span id="zombie-name">Walker</span>
+            HP: <span id="zombie-hp">40</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Player Actions -->
+      <div class="action-bar">
+        <button id="attack-btn">Attack</button>
+        <button id="heavy-btn">Heavy Attack</button>
+        <button id="reload-btn">Reload</button>
+        <button id="use-item-btn">Use Item</button>
+        <button id="flee-btn">Flee</button>
+      </div>
+
+      <!-- Battle Log -->
+      <div class="battle-log">
+        <h3>Battle Log</h3>
+        <div id="log-messages"></div>
+      </div>
+
+    </section>
+
+
+    <!-- ========= EXPLORATION SCREEN ========= -->
+    <section id="exploration-screen" class="screen">
+
+      <h2>Choose a Location</h2>
+
+      <div class="location-grid">
+        <button class="location-btn" data-location="hospital">
+          Hospital
+        </button>
+
+        <button class="location-btn" data-location="policeStation">
+          Police Station
+        </button>
+
+        <button class="location-btn" data-location="supermarket">
+          Supermarket
+        </button>
+
+        <button class="location-btn" data-location="apartment">
+          Apartment Complex
+        </button>
+      </div>
+
+      <div class="exploration-log">
+        <h3>Scavenge Log</h3>
+        <div id="exploration-messages"></div>
+      </div>
+
+      <button id="start-wave-btn" class="disabled-btn" disabled>
+        Start Next Wave
+      </button>
+
+    </section>
+
+
+    <!-- ========= INVENTORY PANEL ========= -->
+    <aside class="inventory-panel">
+
+      <h3>Inventory</h3>
+
+      <div class="weapon-slots">
+        <div class="slot primary-slot">
+          <span>Primary</span>
+          <div class="slot-content" id="primary-slot"></div>
+        </div>
+
+        <div class="slot secondary-slot">
+          <span>Secondary</span>
+          <div class="slot-content" id="secondary-slot"></div>
+        </div>
+      </div>
+
+      <div class="inventory-grid">
+        <div class="slot" data-slot="0"></div>
+        <div class="slot" data-slot="1"></div>
+        <div class="slot" data-slot="2"></div>
+        <div class="slot" data-slot="3"></div>
+        <div class="slot" data-slot="4"></div>
+        <div class="slot" data-slot="5"></div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</body>
+
+</html>

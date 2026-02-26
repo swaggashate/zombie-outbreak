@@ -21,6 +21,11 @@
 
       <div class="player-stats">
         HP: <span id="player-hp">100</span>
+        <div class="xp-display">
+          LVL <span id="player-level">1</span> |
+          XP: <span id="player-xp">0</span> / <span id="xp-needed">50</span>
+          | SP: <span id="skill-points">0</span>
+        </div>
       </div>
     </header>
 
@@ -48,8 +53,8 @@
 
       <!-- Player Actions -->
       <div class="action-bar">
-        <button id="attack-btn">Attack</button>
-        <button id="heavy-btn">Heavy Attack</button>
+        <button id="shoot-btn">Shoot</button>
+        <button id="melee-btn">Melee</button>
         <button id="reload-btn">Reload</button>
         <button id="use-item-btn">Use Item</button>
         <button id="flee-btn">Flee</button>
@@ -97,7 +102,70 @@
       </button>
 
     </section>
+    
+    <!-- ==== BASE SCREEN ==== -->
+    <section id="base-screen" class="screen">
+    
+      <div class="base-background">
+        <!-- Set via CSS or JS like battle backgrounds -->
+      </div>
+    
+      <h2>Safe House</h2>
+      <p class="base-subtitle">Upgrade, craft, and prepare before heading out.</p>
+    
+      <div class="base-actions">
+        <button class="base-btn" id="base-skills-btn">
+          <span class="base-icon">🧠</span>
+          <span>Upgrade Skills</span>
+        </button>
+    
+        <button class="base-btn" id="base-craft-btn">
+          <span class="base-icon">🛡️</span>
+          <span>Craft Armor</span>
+        </button>
+    
+        <button class="base-btn" id="base-upgrade-btn">
+          <span class="base-icon">🔧</span>
+          <span>Upgrade Weapons</span>
+        </button>
+      </div>
+    
+      <!-- Skill Tree Panel (hidden by default, shown when Skills btn clicked) -->
+      <div id="skill-panel" class="base-panel hidden">
+        <h3>Skills <span id="sp-display"></span></h3>
+        <div id="skill-list"></div>
+        <button id="close-skill-panel">Done</button>
+      </div>
+    
+      <!-- Craft Panel (placeholder for now) -->
+      <div id="craft-panel" class="base-panel hidden">
+        <h3>Craft Armor</h3>
+        <p>Coming soon — collect materials during exploration</p>
+        <button id="close-craft-panel">Done</button>
+      </div>
+    
+      <!-- Weapon Upgrade Panel (placeholder) -->
+      <div id="upgrade-panel" class="base-panel hidden">
+        <h3>Upgrade Weapons</h3>
+        <p>Coming soon — Pack-a-Punch style upgrades</p>
+        <button id="close-upgrade-panel">Done</button>
+      </div>
+    
+      <button id="leave-base-btn">Head Out (Explore)</button>
+    
+    </section>
 
+    <!-- Add inside #game -->
+    <div id="weapon-swap-popup" class="popup hidden">
+      <div class="popup-content">
+        <h3>Weapon Found!</h3>
+        <p id="swap-message"></p>
+        <div class="popup-buttons">
+          <button id="swap-yes">Yes, Swap</button>
+          <button id="swap-no">No, Leave It</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ========= INVENTORY PANEL ========= -->
     <aside class="inventory-panel">
@@ -105,14 +173,14 @@
       <h3>Inventory</h3>
 
       <div class="weapon-slots">
-        <div class="slot primary-slot">
-          <span>Primary</span>
-          <div class="slot-content" id="primary-slot"></div>
+        <div class="slot gun-slot">
+          <span>Gun</span>
+          <div class="slot-content" id="gun-slot"></div>
         </div>
 
-        <div class="slot secondary-slot">
-          <span>Secondary</span>
-          <div class="slot-content" id="secondary-slot"></div>
+        <div class="slot melee-slot">
+          <span>Melee</span>
+          <div class="slot-content" id="melee-slot"></div>
         </div>
       </div>
 

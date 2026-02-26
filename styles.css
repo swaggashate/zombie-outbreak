@@ -149,6 +149,100 @@ button:disabled,
   overflow-y: auto;
 }
 
+/* ==== BASE SCREEN ==== */
+
+.base-background {
+  position: absolute;
+  inset: 0;
+  background-image: url("./assets/basebg.png");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.3;
+  z-index: 0;
+}
+
+.base-subtitle {
+  color: #888;
+  margin-bottom: 20px;
+}
+
+.base-actions {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.base-btn {
+  flex: 1;
+  padding: 25px 15px;
+  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: #1a1a1a;
+  border: 1px solid darkred;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.base-btn:hover {
+  background: #2a1a1a;
+  transform: translateY(-2px);
+}
+
+.base-icon {
+  font-size: 28px;
+}
+
+.base-panel {
+  background: #1a1a1a;
+  border: 1px solid #444;
+  padding: 15px;
+  margin-top: 15px;
+  position: relative;
+  z-index: 1;
+}
+
+#leave-base-btn {
+  margin-top: 20px;
+  padding: 15px 30px;
+  font-size: 16px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.popup.hidden {
+  display: none;
+}
+
+.popup-content {
+  background: #1a1a1a;
+  border: 2px solid darkred;
+  padding: 25px;
+  text-align: center;
+  max-width: 400px;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
 /* ===== INVENTORY ===== */
 
 .inventory-panel {

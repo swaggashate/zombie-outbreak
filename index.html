@@ -14,17 +14,47 @@
 
     <!-- ========= HEADER ========= -->
     <header class="top-bar">
-      <div class="wave-info">
-        Wave: <span id="wave-number">1</span>
-        <span id="boss-indicator" class="hidden">⚠ BOSS WAVE</span>
+      <div class="header-left">
+        <div class="wave-info">
+          Wave: <span id="wave-number">1</span>
+          <span id="boss-indicator" class="hidden">⚠ BOSS WAVE</span>
+        </div>
+    
+        <div class="player-stats">
+          <div class="bar-row">
+            <span class="bar-label">HP</span>
+            <div class="stat-bar hp-bar">
+              <div class="stat-bar-fill" id="hp-bar-fill"></div>
+              <span class="stat-bar-text" id="hp-bar-text">100 / 100</span>
+            </div>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">XP</span>
+            <div class="stat-bar xp-bar">
+              <div class="stat-bar-fill" id="xp-bar-fill"></div>
+              <span class="stat-bar-text" id="xp-bar-text">0 / 50</span>
+            </div>
+          </div>
+          <div class="level-display">
+            LVL <span id="player-level">1</span> | SP: <span id="skill-points">0</span>
+          </div>
+          <div class="armor-display">
+            <span id="armor-plate-count">Plates: 0 / 3</span>
+            <div class="stat-bar armor-bar">
+              <div class="stat-bar-fill" id="armor-bar-fill"></div>
+              <span class="stat-bar-text" id="armor-bar-text">No Armor</span>
+            </div>
+            <span id="armor-mod-display" class="armor-mod-label">Mod: None</span>
+          </div>
+        </div>
       </div>
-
-      <div class="player-stats">
-        HP: <span id="player-hp">100</span>
-        <div class="xp-display">
-          LVL <span id="player-level">1</span> |
-          XP: <span id="player-xp">0</span> / <span id="xp-needed">50</span>
-          | SP: <span id="skill-points">0</span>
+    
+      <div class="header-right">
+        <div class="material-counts">
+          <span class="mat-item">🔩 Scrap Metal: <span id="mat-scrapMetal">0</span></span>
+          <span class="mat-item">🧵 Cloth: <span id="mat-cloth">0</span></span>
+          <span class="mat-item">🧪 Chemicals: <span id="mat-chemicals">0</span></span>
+          <span class="mat-item">🩹 Duct Tape: <span id="mat-ductTape">0</span></span>
         </div>
       </div>
     </header>
@@ -106,9 +136,7 @@
     <!-- ==== BASE SCREEN ==== -->
     <section id="base-screen" class="screen">
     
-      <div class="base-background">
-        <!-- Set via CSS or JS like battle backgrounds -->
-      </div>
+      <div class="base-background"></div>
     
       <h2>Safe House</h2>
       <p class="base-subtitle">Upgrade, craft, and prepare before heading out.</p>
@@ -130,24 +158,33 @@
         </button>
       </div>
     
-      <!-- Skill Tree Panel (hidden by default, shown when Skills btn clicked) -->
+      <!-- Skill Tree Panel -->
       <div id="skill-panel" class="base-panel hidden">
         <h3>Skills <span id="sp-display"></span></h3>
         <div id="skill-list"></div>
         <button id="close-skill-panel">Done</button>
       </div>
     
-      <!-- Craft Panel (placeholder for now) -->
+      <!-- Craft Armor Panel -->
       <div id="craft-panel" class="base-panel hidden">
         <h3>Craft Armor</h3>
-        <p>Coming soon — collect materials during exploration</p>
+        <div id="craft-armor-section">
+          <p id="craft-plate-status"></p>
+          <button id="craft-plate-btn">Craft Armor Plate (8 Scrap Metal)</button>
+          <button id="repair-plate-btn">Repair All Plates (2 Duct Tape)</button>
+        </div>
+        <hr style="border-color:#333; margin:12px 0;">
+        <h4>Armor Mods <span style="color:#888; font-size:12px;">(one active at a time)</span></h4>
+        <p style="color:#888; font-size:12px;">Cost: 5 Scrap Metal + 5 Cloth each. Craft once, select freely.</p>
+        <div id="armor-mod-list"></div>
         <button id="close-craft-panel">Done</button>
       </div>
     
-      <!-- Weapon Upgrade Panel (placeholder) -->
+      <!-- Weapon Upgrade Panel -->
       <div id="upgrade-panel" class="base-panel hidden">
-        <h3>Upgrade Weapons</h3>
-        <p>Coming soon — Pack-a-Punch style upgrades</p>
+        <h3>Upgrade Weapons <span style="color:#888; font-size:12px;">(one per visit)</span></h3>
+        <p id="upgrade-used-msg" class="hidden" style="color:orange;">Already upgraded this visit.</p>
+        <div id="weapon-upgrade-list"></div>
         <button id="close-upgrade-panel">Done</button>
       </div>
     

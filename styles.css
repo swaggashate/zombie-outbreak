@@ -455,3 +455,70 @@ button:disabled,
   font-size: 11px;
   color: #855;
 }
+
+/* ==== DAMAGE FLASH OVERLAY ==== */
+/* NEW: Red flash when player takes damage */
+#damage-flash-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(180, 0, 0, 0);
+  pointer-events: none;
+  z-index: 50;
+}
+
+#damage-flash-overlay.flash-active {
+  animation: damageFlash 0.6s ease-out forwards;
+}
+
+@keyframes damageFlash {
+  0% {
+    background: rgba(180, 0, 0, 0.45);
+  }
+
+  100% {
+    background: rgba(180, 0, 0, 0);
+  }
+}
+
+/* ==== GAME OVER OVERLAY ==== */
+/* NEW: Game over image displayed over battle screen */
+#game-over-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 99;
+}
+
+#game-over-overlay.show {
+  display: flex;
+}
+
+#game-over-overlay img {
+  max-width: 80%;
+  max-height: 70%;
+  object-fit: contain;
+}
+
+/* ==== DISMANTLE BUTTON ==== */
+#dismantle-btn.dismantle-active {
+  border-color: #4a90d9;
+  box-shadow: 0 0 8px rgba(74, 144, 217, 0.5);
+  color: #8cf;
+}
+
+#dismantle-btn.dismantle-active:hover {
+  background: #1a2a4a;
+}
+
+.inventory-grid .slot.dismantle-highlight {
+  border-color: #4a90d9;
+  cursor: pointer;
+}
+
+#dismantle-quantity button {
+  padding: 5px 14px;
+  font-size: 18px;
+}

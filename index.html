@@ -86,7 +86,7 @@
         <button id="shoot-btn">Shoot</button>
         <button id="melee-btn">Melee</button>
         <button id="reload-btn">Reload</button>
-        <button id="use-item-btn">Use Item</button>
+        <button id="dismantle-btn">Dismantle</button>
         <button id="flee-btn">Flee</button>
       </div>
 
@@ -117,7 +117,7 @@
           Supermarket
         </button>
 
-        <button class="location-btn" data-location="apartment">
+        <button class="location-btn"  data-location="apartment">
           Apartment Complex
         </button>
       </div>
@@ -170,7 +170,7 @@
         <h3>Craft Armor</h3>
         <div id="craft-armor-section">
           <p id="craft-plate-status"></p>
-          <button id="craft-plate-btn">Craft Armor Plate (8 Scrap Metal)</button>
+          <button id="craft-plate-btn">Craft Armor Plate (3 Scrap Metal)</button>
           <button id="repair-plate-btn">Repair All Plates (2 Duct Tape)</button>
         </div>
         <hr style="border-color:#333; margin:12px 0;">
@@ -204,6 +204,24 @@
       </div>
     </div>
 
+    <!-- Dismantle Popup -->
+    <div id="dismantle-popup" class="popup hidden">
+      <div class="popup-content">
+        <h3>Dismantle Item</h3>
+        <p id="dismantle-message"></p>
+        <div id="dismantle-quantity" class="hidden" style="margin:10px 0;">
+          <button id="dismantle-minus">−</button>
+          <span id="dismantle-qty-display" style="margin:0 12px; font-size:18px;">1</span>
+          <button id="dismantle-plus">+</button>
+        </div>
+        <p id="dismantle-materials" style="color:#8ab; margin-top:8px;"></p>
+        <div class="popup-buttons">
+          <button id="dismantle-confirm">Continue</button>
+          <button id="dismantle-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ========= INVENTORY PANEL ========= -->
     <aside class="inventory-panel">
 
@@ -211,12 +229,10 @@
 
       <div class="weapon-slots">
         <div class="slot gun-slot">
-          <span>Gun</span>
           <div class="slot-content" id="gun-slot"></div>
         </div>
 
         <div class="slot melee-slot">
-          <span>Melee</span>
           <div class="slot-content" id="melee-slot"></div>
         </div>
       </div>

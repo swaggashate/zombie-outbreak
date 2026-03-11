@@ -1,3 +1,7 @@
+// Search =============]=======
+resolveExploration
+//============================
+
 const zombieTypes = {
   walker: {
     name: "Walker",
@@ -39,6 +43,115 @@ const bossTypes = {
     enrageAt: 0.3,
     image: "./assets/butcher-zombie.png",
   }
+};
+
+const humanEnemyTypes = {
+  scavenger: {
+    name: "Scavenger",
+    maxHP: 25,
+    attack: 5,
+    speed: 4,
+    dodgeChance: 0.25,
+    ability: null,
+    isHuman: true,
+    image: "./assets/scavenger.png",
+    dropTable: () => {
+      const pool = ["scrapMetal", "cloth", "ductTape", "chemicals", "pistolAmmo", "shotgunAmmo", "arAmmo"];
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+  },
+  raider: {
+    name: "Raider",
+    maxHP: 60,
+    attack: 10,
+    speed: 3,
+    dodgeChance: 0.08,
+    ability: null,
+    isHuman: true,
+    image: "./assets/raider.png",
+    dropTable: () => {
+      return Math.random() < 0.3 ? "usedArmorPlate" : "scrapMetal";
+    }
+  },
+  tank: {
+    name: "Tank",
+    maxHP: 120,
+    attack: 18,
+    speed: 1,
+    dodgeChance: 0,
+    ability: null,
+    isHuman: true,
+    image: "./assets/tank.png",
+    dropTable: () => {
+      return Math.random() < 0.5 ? "guaranteedWeapon" : "fullArmorPlate";
+    }
+  },
+};
+
+const humanBossTypes = {
+  ringleader: {
+    name: "The Ringleader",
+    maxHP: 140,
+    attack: 14,
+    speed: 3,
+    dodgeChance: 0.15,
+    ability: "stagger", // chance to stagger you - next attack is guaranteed crit
+    doubleTurnChance: 0.2,
+    isHuman: true,
+    isBoss: true,
+    image: "./assets/ringleader.png",
+  }
+};
+
+const specialLocations = {
+  scienceLab: {
+    name: "Science Lab",
+    lootTable: ["medkit", "bandage"],
+    materialTable: ["chemicals", "scrapMetal"],
+    zombieChance: 0.6,
+    rareEnemyChance: 0.08,
+    bgImage: "./assets/sciencebg.png",
+    weaponFindChance: 0.06,
+    weaponTable: ["combatKnife", "machete"],
+    armorDropChance: 0.10,
+    waveType: "zombie"
+  },
+  militaryBase: {
+    name: "Military Base",
+    lootTable: ["arAmmo", "shotgunAmmo", "pistolAmmo", "medkit"],
+    materialTable: ["scrapMetal", "ductTape", "chemicals"],
+    zombieChance: 0.7,
+    rareEnemyChance: 0.12,
+    bgImage: "./assets/militarybg.png",
+    weaponFindChance: 0.10,
+    weaponTable: ["ar", "shotgun", "katana"],
+    armorDropChance: 0.12,
+    waveType: "zombie",
+  },
+  outpost: {
+    name: "Outpost",
+    lootTable: ["medkit", "bandage", "food", "pistolAmmo", "shotgunAmmo", "arAmmo"],
+    materialTable: ["scrapMetal", "ductTape", "cloth"],
+    zombieChance: 0,
+    rareEnemyChance: 0,
+    bgImage: "./assets/outpostbg.png",
+    weaponFindChance: 0.7,
+    weaponTable: ["machete", "shotgun", "combatKnife", "pistol"],
+    armorDropChance: 0.09,
+    waveType: "human",
+  },
+  scrapyard: {
+    name: "Scrapyard Settlement",
+    lootTable: ["food", "bandage", "shotgunAmmo", "arAmmo"],
+    materialTable: ["scrapMetal", "scrapMetal", "ductTape", "cloth"],
+    zombieChance: 0,
+    rareEnemyChance: 0,
+    bgImage: "./assets/scrapyardbg.png",
+    weaponFindChance: 0.08,
+    weaponTable: ["bat", "machete", "katana"],
+    armorDropChance: 0.10,
+    waveType: "human",
+  },
 };
 
 const weapons = {
@@ -121,7 +234,9 @@ const itemDefs = {
   food: { name: "Canned Food", type: "heal", value: 15 },
   pistolAmmo: { name: "Pistol Ammo", type: "ammo", value: 6 },
   shotgunAmmo: { name: "Shotgun Ammo", type: "ammo", value: 2 },
-  armorPlate: { name: "Armor Plate", type: "armor", value: 1 }
+  arAmmo: { name: "AR Ammo", type: "ammo", value: 30},
+  armorPlate: { name: "Armor Plate", type: "armor", value: 1 },
+  map: { name: "Map", type: "special", value: 0 }
 };
 
 const locations = {
@@ -133,37 +248,41 @@ const locations = {
     rareEnemyChance: 0.05,
     bgImage: "./assets/hospitalbg.png",
     weaponFindChance: 0.05,
-    weaponTable: ["combatKnife", "machete"]
+    weaponTable: ["combatKnife", "machete"],
+    armorDropChance: 0.08
   },
   policeStation: {
     name: "Police Station",
-    lootTable: ["pistolAmmo", "shotgunAmmo", "medkit"],
+    lootTable: ["pistolAmmo", "shotgunAmmo", "arAmmo", "medkit"],
     materialTable: ["scrapMetal", "ductTape"],
     zombieChance: 0.6,
     rareEnemyChance: 0.1,
     bgImage: "./assets/stationbg.png",
     weaponFindChance: 0.08,
-    weaponTable: ["shotgun", "ar"]
+    weaponTable: ["shotgun", "ar"],
+    armorDropChance: 0.10
   },
   supermarket: {
     name: "Supermarket",
     lootTable: ["food", "bandage", "medkit"],
-    materialTable: ["ductTape", "cloth"],
+    materialTable: ["ductTape", "cloth", "chemicals"],
     zombieChance: 0.3,
     rareEnemyChance: 0.03,
     bgImage: "./assets/marketbg.png",
     weaponFindChance: 0.04,
-    weaponTable: ["bat", "combatKnife"]
+    weaponTable: ["bat", "combatKnife"],
+    armorDropChance: 0.06
   },
   apartment: {
     name: "Apartment Complex",
-    lootTable: ["food", "medkit", "bandage", "pistolAmmo", "shotgunAmmo"],
-    materialTable: ["cloth", "scrapMetal"],
+    lootTable: ["food", "medkit", "bandage", "pistolAmmo", "shotgunAmmo", "arAmmo"],
+    materialTable: ["cloth", "scrapMetal", "ductTape", "chemicals"],
     zombieChance: 0.35,
     rareEnemyChance: 0.04,
     bgImage: "./assets/apartmentbg.png",
     weaponFindChance: 0.05,
-    weaponTable: ["machete", "katana"]
+    weaponTable: ["machete", "katana", "bat", "combatKnife"],
+    armorDropChance: 0.09
   }
 };
 
@@ -172,6 +291,15 @@ const materialDefs = {
   cloth: { name: "Cloth" },
   chemicals: { name: "Chemicals" },
   ductTape: { name: "Duct Tape" }
+};
+
+const dismantleRecipes = {
+  medkit: { cloth: 1, chemicals: 1 },
+  bandage: { cloth: 1, ductTape: 1 },
+  pistolAmmo: { scrapMetal: 1 },
+  shotgunAmmo: { scrapMetal: 1 },
+  arAmmo: { scrapMetal: 1 },
+  food: { scrapMetal: 1 },
 };
 
 const armorModDefs = {
@@ -189,8 +317,8 @@ const weaponUpgrades = {
       {
         name: "T1: Extended Mag",
         desc: "maxAmmo +2",
-        unlockCondition: function () { return true; },  // always unlocked
-        apply: function (w) { w.maxAmmo += 2; w.currentAmmo = Math.min(w.currentAmmo + 2, w.maxAmmo); }
+        unlockCondition: function () { return true; },
+        apply: function (w) { w.maxAmmo += 2; w.currentAmmo = w.maxAmmo; }
       },
       {
         name: "T2: Deadeye Kit",
@@ -248,7 +376,7 @@ const weaponUpgrades = {
           return game.waveNumber >= 10 || killTracker.bruteKills >= 1;
         },
         lockReason: "Clear Wave 10 or defeat a Brute",
-        apply: function (w) { w.maxAmmo += 10; w.currentAmmo = Math.min(w.currentAmmo + 10, w.maxAmmo); }
+        apply: function (w) { w.maxAmmo += 10; w.currentAmmo = w.maxAmmo; }
       },
       {
         name: "T2: Controlled Burst",
@@ -275,12 +403,13 @@ const weaponUpgrades = {
 const skillDefs = {
   evasion: { name: "Evasion", max: 10, desc: "+2% dodge chance per point (cap 25%)" },
   quickStep: { name: "Quick Step", max: 5, desc: "+2% double-turn chance per point" },
-  toughness: { name: "Toughness", max: 10, desc: "+10 max HP per point" },
+  toughness: { name: "Toughness", max: Infinity, desc: "+10 max HP per point (no cap)" },
   critTraining: { name: "Critical Training", max: 5, desc: "+1.5% crit chance per point" },
   fieldMedic: { name: "Field Medic", max: 5, desc: "+15% healing effectiveness per point" },
   scavenger: { name: "Scavenger", max: 5, desc: "+10% chance for bonus loot per point" },
   adrenaline: { name: "Adrenaline", max: 3, desc: "Below 30% HP: +5% dodge & +10% dmg per point" },
-  armorCapacity: { name: "Armor Capacity", max: 1, desc: "Spend 2 SP: max armor plates 3 → 5 (costs 2 points)" }
+  armorCapacity: { name: "Armor Capacity", max: 1, desc: "Spend 2 SP: max armor plates 3 → 5 (costs 2 points)" },
+  aggression: { name: "Aggression", max: Infinity, desc: "+2% overall damage increase per point (no cap)"}
 };
 
 const player_materials = {
@@ -306,7 +435,8 @@ const player = {
     fieldMedic: 0,      // max 5  → +15% heal effectiveness per point
     scavenger: 0,       // max 5  → +10% chance for bonus loot per point
     adrenaline: 0,       // max 3  → below 30% HP: +5% dodge & +10% damage per point
-    armorCapacity: 0
+    armorCapacity: 0,
+    aggression: 0,
   }
 };
 
@@ -360,11 +490,17 @@ const game = {
   currentEnemies: [],
   currentEnemyIndex: 0,
   isBossWave: false,
-  explorationDone: false
+  explorationDone: false,
+  hasMap: false,
+  specialLocationAvailable: false,
+  currentWaveType: "zombie",
 };
 
 let battleLog = [];
 let explorationLog = [];
+let dismantleMode = false;
+let dismantlePendingSlot = null;
+let dismantleQty = 1;
 
 let shotFiredAtCurrentEnemy = false;  // for Reinforced Action (first shot bonus)
 let controlledBurstActive = false;    // for AR T2 (shoot twice)
@@ -404,6 +540,96 @@ function createBoss(waveNumber) {
     isRare: false,
     enraged: false,
   };
+}
+
+// ==== HUMAN ENEMY CREATION ====
+function createHumanEnemy(typeId, waveNumber) {
+  const template = humanEnemyTypes[typeId];
+  return {
+    ...template,
+    typeId: typeId,
+    hp: Math.floor(template.maxHP * (1 + (waveNumber - 1) * 0.08)),
+    maxHP: Math.floor(template.maxHP * (1 + (waveNumber - 1) * 0.08)),
+    attack: Math.floor(template.attack * (1 + (waveNumber - 1) * 0.05)),
+    isRare: false,
+    isBoss: false,
+    isHuman: true
+  };
+}
+
+function createHumanBoss(waveNumber) {
+  const template = humanBossTypes.ringleader;
+  return {
+    ...template,
+    hp: Math.floor(template.maxHP * (1 + (waveNumber - 1) * 0.1)),
+    maxHP: Math.floor(template.maxHP * (1 + (waveNumber - 1) * 0.1)),
+    attack: Math.floor(template.attack * (1 + (waveNumber - 1) * 0.05)),
+    isBoss: true,
+    isRare: false,
+    isHuman: true,
+    enraged: false,
+    staggerActive: false // when true, next ringleader attack is guaranteed crit
+  };
+}
+
+// Generate a human wave (for special locations)
+function generateHumanWave(waveNumber) {
+  // Check for human boss every 5th wave
+  if (waveNumber % 5 === 0 && Math.random() < 0.5) {
+    return [createHumanBoss(waveNumber)];
+  }
+
+  const count = 2 + Math.floor(waveNumber / 3);
+  const typePool = ["scavenger", "raider"];
+  if (waveNumber >= 5) typePool.push("tank");
+
+  const enemies = [];
+  for (let i = 0; i < count; i++) {
+    const typeId = typePool[Math.floor(Math.random() * typePool.length)];
+    enemies.push(createHumanEnemy(typeId, waveNumber));
+  }
+  return enemies;
+}
+
+// Handle human enemy drops after defeat
+function handleHumanDrop(enemy) {
+  // All human enemies have a rare chance to drop a map
+  if (!game.hasMap && Math.random() < 0.10) {
+    game.hasMap = true;
+    game.specialLocationAvailable = true;
+    logBattle("🗺️ Found a Map! Special locations will appear on your next exploration.");
+  }
+
+  if (enemy.isBoss) {
+    // Ringleader drops handled separately (XP only, no special item drop function)
+    return;
+  }
+
+  const template = humanEnemyTypes[enemy.typeId];
+  if (!template || !template.dropTable) return;
+
+  const drop = template.dropTable();
+
+  if (drop === "usedArmorPlate") {
+    addFoundPlate(true);
+    logBattle("🛡️ The " + enemy.name + " dropped a used armor plate!");
+  } else if (drop === "fullArmorPlate") {
+    addFoundPlate(false);
+    logBattle("🛡️ The " + enemy.name + " dropped a full armor plate!");
+  } else if (drop === "guaranteedWeapon") {
+    // Pick a random weapon to offer
+    const weaponPool = ["shotgun", "ar", "katana", "machete", "combatKnife"];
+    const foundKey = weaponPool[Math.floor(Math.random() * weaponPool.length)];
+    logBattle("🔥 The " + enemy.name + " dropped a " + weapons[foundKey].name + "!");
+    showWeaponSwapPopup(foundKey);
+  } else if (["scrapMetal", "cloth", "ductTape", "chemicals"].includes(drop)) {
+    const amount = 1 + Math.floor(Math.random() * 2);
+    player_materials[drop] += amount;
+    logBattle("🔩 The " + enemy.name + " dropped " + amount + " " + materialDefs[drop].name);
+  } else if (["pistolAmmo", "shotgunAmmo", "arAmmo"].includes(drop)) {
+    addItem(drop);
+    logBattle("📦 The " + enemy.name + " dropped " + itemDefs[drop].name);
+  }
 }
 
 function xpToNextLevel() {
@@ -496,11 +722,11 @@ function craftArmorPlate() {
     logExploration("Already at max plates!");
     return false;
   }
-  if (player_materials.scrapMetal < 8) {
-    logExploration("Not enough Scrap Metal (need 8).");
+  if (player_materials.scrapMetal < 3) {
+    logExploration("Not enough Scrap Metal (need 3).");
     return false;
   }
-  player_materials.scrapMetal -= 8;
+  player_materials.scrapMetal -= 3;
   armor.plates.push({ currentArmor: getArmorTierMax() });
   return true;
 }
@@ -524,24 +750,37 @@ function repairAllPlates() {
   return true;
 }
 
-// Add a found plate (from exploration drop)
+// CHANGED: If at max plates, convert found plate to scrap metal based on durability %
 function addFoundPlate(used) {
-  if (armor.plates.length >= armor.maxPlates) {
-    logExploration("Can't carry more armor plates!");
-    return false;
-  }
   const max = getArmorTierMax();
   const hp = used ? Math.floor(max * (0.3 + Math.random() * 0.4)) : max;
+
+  if (armor.plates.length >= armor.maxPlates) {
+    // Convert to scrap metal: 8 scrap for a full plate, scaled by durability %
+    const durabilityPercent = hp / max;
+    const scrapGained = Math.max(1, Math.floor(8 * durabilityPercent));
+    player_materials.scrapMetal += scrapGained;
+    logExploration("🛡️ Found a " + (used ? "used" : "full") + " armor plate but at max capacity!");
+    logExploration("🔩 Scrapped it for " + scrapGained + " Scrap Metal (" + Math.round(durabilityPercent * 100) + "% durability)");
+    return false;
+  }
+
   armor.plates.push({ currentArmor: hp });
   logExploration("🛡️ Found an armor plate! (" + (used ? "used" : "full") + ")");
   return true;
 }
 
 function generateWave(waveNumber) {
-  if (isBossWave(waveNumber)) {
+  if (isBossWave(waveNumber) && game.currentWaveType === "zombie") {
     return [createBoss(waveNumber)];
   }
 
+  // Human wave (special locations)
+  if (game.currentWaveType === "human") {
+    return generateHumanWave(waveNumber);
+  }
+
+  // Zombie wave with chance for 1-2 human enemies
   const count = 1 + Math.floor(waveNumber / 2);
   const typePool = ["walker"];
 
@@ -553,6 +792,18 @@ function generateWave(waveNumber) {
     const randomIndex = Math.floor(Math.random() * typePool.length);
     const typeId = typePool[randomIndex];
     enemies.push(createZombie(typeId, waveNumber));
+  }
+
+  // Chance to add 1-2 human enemies to zombie waves (not boss waves)
+  if (!isBossWave(waveNumber) && Math.random() < 0.3) {
+    const humanCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
+    const humanPool = ["scavenger", "raider"];
+    if (waveNumber >= 8) humanPool.push("tank");
+    for (let i = 0; i < humanCount; i++) {
+      const hTypeId = humanPool[Math.floor(Math.random() * humanPool.length)];
+      enemies.push(createHumanEnemy(hTypeId, waveNumber));
+    }
+    logBattle("⚠ Human enemies spotted among the horde!");
   }
 
   return enemies;
@@ -640,9 +891,27 @@ function addItem(itemId) {
     slot => slot && slot.id === itemId
   );
 
+  // ===== NEW: Maps cannot stack =====
+  if (itemId === "map") {
+    const emptySlot = inventory.slots.findIndex(s => s === null);
+
+    if (emptySlot === -1) {
+      logExploration("🗺️ Found a Map, but inventory is full!");
+      return false;
+    }
+
+    inventory.slots[emptySlot] = {
+      id: "map",
+      quantity: 1
+    };
+
+    logExploration("🗺️ Found a Map!");
+    renderInventory();
+    return true;
+  }
+
   if (existing) {
     existing.quantity++;
-    logExploration("Found " + itemDefs[itemId].name + " (stacked)");
     return true;
   }
 
@@ -655,7 +924,6 @@ function addItem(itemId) {
     }
     if (inventory.slots[i] === null) {
       inventory.slots[i] = { id: itemId, quantity: 1 };
-      logExploration("Found " + itemDefs[itemId].name);
       return true;
     }
   }
@@ -665,8 +933,8 @@ function addItem(itemId) {
 }
 
 function useItem(slotIndex) {
-  // UPDATED: Allow item use during battle OR exploration
-  if (game.phase !== "battle" && game.phase !== "exploration") return;
+  // CHANGED: Only allow item use during battle (HP/ammo refill at base now)
+  if (game.phase !== "battle") return;
 
   const slot = inventory.slots[slotIndex];
   if (!slot) return;
@@ -690,13 +958,23 @@ function useItem(slotIndex) {
     logFn("Used " + def.name + " — healed " + healAmount + " HP");
   }
 
+  // FIX: Ammo items now fill mag to max. Also check ammo matches gun type.
   if (def.type === "ammo") {
     if (inventory.gun) {
-      inventory.gun.currentAmmo = Math.min(
-        inventory.gun.currentAmmo + def.value,
-        inventory.gun.maxAmmo
-      );
-      logFn("Used " + def.name + " — reloaded " + def.value + " rounds");
+      // Check ammo matches gun
+      const gunKey = inventory.gun.key;
+      const validAmmo =
+        (gunKey === "pistol" && slot.id === "pistolAmmo") ||
+        (gunKey === "shotgun" && slot.id === "shotgunAmmo") ||
+        (gunKey === "ar" && slot.id === "arAmmo");
+
+      if (!validAmmo) {
+        logFn("Wrong ammo type for your " + inventory.gun.name + "!");
+        return;  // Don't consume
+      }
+
+      inventory.gun.currentAmmo = inventory.gun.maxAmmo;  // FIX: fill to max
+      logFn("Used " + def.name + " — fully reloaded " + inventory.gun.name + " (" + inventory.gun.maxAmmo + "/" + inventory.gun.maxAmmo + ")");
     } else {
       logFn("No gun equipped to reload!");
       return;  // Don't consume the item
@@ -735,8 +1013,13 @@ function logExploration(message) {
 
 
 function resolveExploration(locationKey) {
-  const location = locations[locationKey];
+  const location = locations[locationKey] || specialLocations[locationKey];
   if (!location) return;
+
+  // If this is a normal location, set wave type to zombie
+  if (locations[locationKey]) {
+    game.currentWaveType = "zombie";
+  }
 
   game.lastLocationKey = locationKey;
 
@@ -744,10 +1027,50 @@ function resolveExploration(locationKey) {
   logExploration("Scavenging " + location.name + "...");
 
   const lootTable = location.lootTable;
-  const randomItem = lootTable[Math.floor(Math.random() * lootTable.length)];
-  addItem(randomItem);
 
-  // After the first addItem(randomItem):
+  // Define drop chances: fair distribution, not too rare
+  const dropChances = [
+    { drops: 1, chance: 0.4 },
+    { drops: 2, chance: 0.3 },
+    { drops: 3, chance: 0.2 },
+    { drops: 4, chance: 0.1 }
+  ];
+
+  // Roll the number of drops
+  let rand = Math.random();
+  let numDrops = 1; // default
+  let cumulative = 0;
+  for (const chance of dropChances) {
+    cumulative += chance.chance;
+    if (rand < cumulative) {
+      numDrops = chance.drops;
+      break;
+    }
+  }
+
+  // ===== NEW: Roll drops and show item names in log =====
+
+  let foundItems = [];
+
+  for (let i = 0; i < numDrops; i++) {
+
+    const randomItem = lootTable[Math.floor(Math.random() * lootTable.length)];
+
+    if (addItem(randomItem)) {
+      const def = itemDefs[randomItem];
+      foundItems.push(def ? def.name : randomItem);
+    }
+
+  }
+
+  // Log all items found
+  if (foundItems.length > 0) {
+    logExploration("Found: " + foundItems.join(", "));
+  } else {
+    logExploration("Found items, but inventory is full!");
+  }
+
+  // Scavenger bonus (unchanged, adds extra item if applicable)
   const scavengerChance = player.skills.scavenger * 0.10;
   if (Math.random() < scavengerChance) {
     const bonusItem = lootTable[Math.floor(Math.random() * lootTable.length)];
@@ -755,11 +1078,46 @@ function resolveExploration(locationKey) {
     logExploration("🔍 Scavenger instinct! Found an extra item!");
   }
 
-  // Material drop (always get 1 material)
+  // Material drop — roll system (less rare than loot table)
   const matTable = location.materialTable;
-  const randomMat = matTable[Math.floor(Math.random() * matTable.length)];
-  player_materials[randomMat]++;
-  logExploration("Salvaged " + materialDefs[randomMat].name);
+
+  const materialDropChances = [
+    { drops: 1, chance: 0.20 },
+    { drops: 2, chance: 0.35 },
+    { drops: 3, chance: 0.30 },
+    { drops: 4, chance: 0.15 }
+  ];
+
+  let matRand = Math.random();
+  let numMatDrops = 1;
+  let matCumulative = 0;
+  for (const mc of materialDropChances) {
+    matCumulative += mc.chance;
+    if (matRand < matCumulative) {
+      numMatDrops = mc.drops;
+      break;
+    }
+  }
+
+  let foundMaterials = [];
+
+  for (let i = 0; i < numMatDrops; i++) {
+    const randomMat = matTable[Math.floor(Math.random() * matTable.length)];
+    player_materials[randomMat]++;
+    foundMaterials.push(materialDefs[randomMat].name);
+  }
+
+  if (foundMaterials.length > 0) {
+    logExploration("Salvaged: " + foundMaterials.join(", "));
+  }
+
+  // Chance to find a map at any location (if you don't already have one)
+  // ===== NEW: Map drop =====
+  if (Math.random() < 0.05) {
+    if (addItem("map")) {
+      game.specialLocationAvailable = true;
+    }
+  }
 
   // Rare armor plate drop
   if (Math.random() < (location.armorDropChance || 0)) {
@@ -775,7 +1133,7 @@ function resolveExploration(locationKey) {
     showWeaponSwapPopup(foundKey);
     return;  // pause exploration flow until player decides
   }
-  
+
   if (Math.random() < location.zombieChance) {
     const typePool = ["walker"];
     if (game.waveNumber >= 3) typePool.push("runner");
@@ -803,13 +1161,7 @@ function resolveExploration(locationKey) {
     }
   }
 
-  if (player.hp < player.maxHP) {
-    logExploration("Area clear. No zombies encountered. Rest Bonus, + 10HP!");
-    player.hp = Math.min(player.hp + 10, player.maxHP);
-  } else {
-    logExploration("Area clear. No zombies encountered. No Bonus - Max Health!");
-  }
-
+  logExploration("Area clear. No zombies encountered.");
   game.explorationDone = true;
   renderAll();
 }
@@ -844,6 +1196,9 @@ function startWave() {
   if (!game.explorationDone) return;
 
   game.isBossWave = isBossWave(game.waveNumber);
+  // currentWaveType is set during exploration when choosing a special location
+  // Default to zombie if not set
+  if (!game.currentWaveType) game.currentWaveType = "zombie";
   game.currentEnemies = generateWave(game.waveNumber);
   game.currentEnemyIndex = 0;
 
@@ -911,6 +1266,12 @@ function playerShoot() {
       const bonus = player.skills.adrenaline * 0.10;
       damage = Math.floor(damage * (1 + bonus));
       logBattle("🔥 Adrenaline surge! +" + Math.round(bonus * 100) + "% damage!");
+    }
+
+    // Aggression skill: +2% damage per point
+    if (player.skills.aggression > 0) {
+      const aggroBonus = player.skills.aggression * 0.02;
+      damage = Math.floor(damage * (1 + aggroBonus));
     }
 
     enemy.hp -= damage;
@@ -1011,6 +1372,12 @@ function playerMelee() {
       logBattle("🔥 Adrenaline surge! +" + Math.round(bonus * 100) + "% damage!");
     }
 
+    // Aggression skill: +2% damage per point
+    if (player.skills.aggression > 0) {
+      const aggroBonus = player.skills.aggression * 0.02;
+      damage = Math.floor(damage * (1 + aggroBonus));
+    }
+
     enemy.hp -= damage;
     if (enemy.hp < 0) enemy.hp = 0;
 
@@ -1024,32 +1391,106 @@ function playerMelee() {
   else enemyTurn();
 }
 
+// FIX: Reloading now consumes matching ammo from inventory. No ammo = can't reload.
 function playerReload() {
   if (game.phase !== "battle") return;
   const gun = inventory.gun;
   if (!gun) { logBattle("No gun to reload!"); return; }
   if (gun.currentAmmo >= gun.maxAmmo) { logBattle("Already fully loaded!"); return; }
-  gun.currentAmmo = gun.maxAmmo;
+
+  // Determine which ammo item matches this gun
+  let ammoItemId = null;
+  if (gun.key === "pistol") ammoItemId = "pistolAmmo";
+  else if (gun.key === "shotgun") ammoItemId = "shotgunAmmo";
+  else if (gun.key === "ar") ammoItemId = "arAmmo";
+
+  if (!ammoItemId) {
+    logBattle("No compatible ammo type for " + gun.name + "!");
+    return;
+  }
+
+  // Find ammo in inventory
+  const slotIndex = inventory.slots.findIndex(function (s) {
+    return s && s.id === ammoItemId;
+  });
+
+  if (slotIndex === -1) {
+    logBattle("No " + itemDefs[ammoItemId].name + " in inventory! Can't reload.");
+    return;
+  }
+
+  // Consume one ammo item, fill mag to max
+  inventory.slots[slotIndex].quantity--;
+  if (inventory.slots[slotIndex].quantity <= 0) {
+    inventory.slots[slotIndex] = null;
+  }
+
+  gun.currentAmmo = gun.maxAmmo;  // FIX: always fill to max
   logBattle("Reloaded " + gun.name + " (" + gun.maxAmmo + "/" + gun.maxAmmo + ")");
   renderAll();
   enemyTurn();
 }
 
+// CHANGED: Flee now works on boss waves with scaling chance. Fleeing boss = lose 1 random item.
 function attemptFlee() {
   if (game.phase !== "battle") return;
 
+  let fleeChance = 0.5;  // default for normal waves
+
   if (game.isBossWave) {
-    logBattle("Can't flee from a boss!");
-    return;
+    // Boss flee chance decreases with wave number
+    const wave = game.waveNumber;
+    if (wave <= 5) {
+      fleeChance = 0.80 + Math.random() * 0.10;       // 80-90%
+    } else if (wave <= 10) {
+      fleeChance = 0.55 + Math.random() * 0.10;       // 55-65%
+    } else if (wave <= 15) {
+      fleeChance = 0.35 + Math.random() * 0.10;       // 35-45%
+    } else {
+      fleeChance = 0.20 + Math.random() * 0.10;       // 20-30% (wave 20+)
+    }
   }
 
-  if (Math.random() < 0.5) {
+  if (Math.random() < fleeChance) {
     logBattle("You escaped!");
+
+    // NEW: Fleeing a boss costs 1 random inventory item
+    if (game.isBossWave) {
+      const occupiedSlots = [];
+      inventory.slots.forEach(function (slot, idx) {
+        if (slot) occupiedSlots.push(idx);
+      });
+      if (occupiedSlots.length > 0) {
+        const randomIdx = occupiedSlots[Math.floor(Math.random() * occupiedSlots.length)];
+        const lostItem = inventory.slots[randomIdx];
+        const lostName = itemDefs[lostItem.id] ? itemDefs[lostItem.id].name : lostItem.id;
+        lostItem.quantity--;
+        if (lostItem.quantity <= 0) inventory.slots[randomIdx] = null;
+        logBattle("💀 You dropped a " + lostName + " while fleeing the boss!");
+      } else {
+        logBattle("💀 You fled with nothing to lose!");
+      }
+    }
+
     endWave(false);
   } else {
     logBattle("Couldn't escape!");
     enemyTurn();
   }
+}
+
+// NEW: Red damage flash overlay on battle screen
+function triggerDamageFlash() {
+  let overlay = document.getElementById("damage-flash-overlay");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "damage-flash-overlay";
+    document.getElementById("battle-screen").appendChild(overlay);
+  }
+  // Reset animation
+  overlay.classList.remove("flash-active");
+  void overlay.offsetWidth;  // force reflow
+  overlay.classList.add("flash-active");
 }
 
 function enemyTurn() {
@@ -1072,6 +1513,14 @@ function enemyTurn() {
     }
   }
 
+  // Ringleader stagger: if stagger is active, this attack is a guaranteed crit
+  let ringleaderGuaranteedCrit = false;
+  if (enemy.staggerActive) {
+    ringleaderGuaranteedCrit = true;
+    enemy.staggerActive = false;
+    logBattle("💫 The Ringleader's stagger pays off — guaranteed critical hit!");
+  }
+
   const zombieWeapon = { damage: enemy.attack, critChance: 0 };
   const result = calculateAttack(enemy, player, zombieWeapon);
 
@@ -1081,6 +1530,21 @@ function enemyTurn() {
     applyDamageWithArmor(result.damage);
     if (player.hp < 0) player.hp = 0;
     logBattle(enemy.name + " hits you for " + result.damage + " damage!");
+    triggerDamageFlash();
+
+    // Ringleader guaranteed crit from stagger
+    if (ringleaderGuaranteedCrit) {
+      const extraDmg = result.damage; // double damage as "crit"
+      applyDamageWithArmor(extraDmg);
+      logBattle("💥 CRITICAL from stagger! " + extraDmg + " bonus damage!");
+      triggerDamageFlash();
+    }
+
+    // Ringleader stagger chance: 25% chance to stagger you for next attack
+    if (enemy.ability === "stagger" && Math.random() < 0.25) {
+      enemy.staggerActive = true;
+      logBattle("😵 " + enemy.name + " staggers you! Next attack will be a guaranteed crit!");
+    }
 
     // Spiked Pads: reflect 2-4 damage
     if (armor.activeMod === "spikedPads") {
@@ -1108,7 +1572,21 @@ function enemyTurn() {
       } else {
         applyDamageWithArmor(result2.damage);
         logBattle(enemy.name + " hits you for " + result2.damage + " more damage!");
+        triggerDamageFlash();
       }
+    }
+  }
+
+  // Ringleader double turn chance
+  if (enemy.doubleTurnChance && enemy.isHuman && Math.random() < enemy.doubleTurnChance) {
+    logBattle(enemy.name + " acts again!");
+    const result3 = calculateAttack(enemy, player, zombieWeapon);
+    if (result3.dodged) {
+      logBattle(enemy.name + "'s second attack — you dodge!");
+    } else {
+      applyDamageWithArmor(result3.damage);
+      logBattle(enemy.name + " hits you for " + result3.damage + " more damage!");
+      triggerDamageFlash();
     }
   }
 
@@ -1136,6 +1614,11 @@ function handleEnemyDefeated() {
   if (enemy.typeId === "runner") killTracker.runnerKills++;
   if (enemy.typeId === "brute") killTracker.bruteKills++;
   if (enemy.isBoss) killTracker.bossKills++;
+
+  // Human enemy drops
+  if (enemy.isHuman) {
+    handleHumanDrop(enemy);
+  }
 
   // XP award
   let xpGain = 10;
@@ -1177,11 +1660,22 @@ function endWave(victory) {
   }, 1500);
 }
 
+// CHANGED: Show game over overlay image on battle screen
 function handleGameOver() {
   logBattle("💀 YOU DIED — Game Over on Wave " + game.waveNumber);
   document.querySelectorAll(".action-bar button").forEach(function (btn) {
     btn.disabled = true;
   });
+
+  // NEW: Show game over overlay
+  let gameOverOverlay = document.getElementById("game-over-overlay");
+  if (!gameOverOverlay) {
+    gameOverOverlay = document.createElement("div");
+    gameOverOverlay.id = "game-over-overlay";
+    gameOverOverlay.innerHTML = '<img src="./assets/game-over.png" alt="Game Over" />';
+    document.getElementById("battle-screen").appendChild(gameOverOverlay);
+  }
+  gameOverOverlay.classList.add("show");
 }
 
 function setPhase(phase) {
@@ -1200,6 +1694,12 @@ function setPhase(phase) {
   } else if (phase === "base") {
     baseScreen.classList.add("active");
     upgradeUsedThisVisit = false;
+
+    // NEW: Fully refill HP and gun mag at base
+    player.hp = player.maxHP;
+    if (inventory.gun) {
+      inventory.gun.currentAmmo = inventory.gun.maxAmmo;
+    }
   } else if (phase === "exploration") {
     explorationScreen.classList.add("active");
   }
@@ -1320,14 +1820,14 @@ function renderSkillPanel() {
 
     div.innerHTML =
       '<span class="skill-name">' + def.name + '</span>' +
-      '<span class="skill-rank">' + current + ' / ' + def.max + '</span>' +
+      '<span class="skill-rank">' + current + (def.max === Infinity ? '' : (' / ' + def.max)) + '</span>' +
       '<span class="skill-desc">' + def.desc + '</span>';
 
     const btn = document.createElement("button");
     btn.textContent = "+";
-    btn.disabled = player.skillPoints <= 0 || current >= def.max;
+    btn.disabled = player.skillPoints <= 0 || (def.max !== Infinity && current >= def.max);
     btn.addEventListener("click", function () {
-      if (player.skillPoints > 0 && current < def.max) {
+      if (player.skillPoints > 0 && (def.max === Infinity || current < def.max)) {
         player.skills[key]++;
         player.skillPoints--;
         applySkills();
@@ -1360,7 +1860,17 @@ function renderExploration() {
 
   document.querySelectorAll(".location-btn").forEach(function (btn) {
     const key = btn.dataset.location;
-    if (availableKeys.has(key) && !game.explorationDone) {
+    // Handle both normal and special locations
+    if (key && specialLocations[key]) {
+      // Special location button
+      if (!game.explorationDone && game.specialLocationAvailable) {
+        btn.disabled = false;
+        btn.classList.remove("disabled-btn");
+      } else {
+        btn.disabled = true;
+        btn.classList.add("disabled-btn");
+      }
+    } else if (availableKeys.has(key) && !game.explorationDone) {
       btn.disabled = false;
       btn.classList.remove("disabled-btn");
     } else {
@@ -1379,22 +1889,43 @@ function renderExploration() {
   }
 
   const chngBg = document.querySelector(".battle-background");
-  let currentLoc = locations[game.lastLocationKey];
+  let currentLoc = locations[game.lastLocationKey] || specialLocations[game.lastLocationKey];
   if (currentLoc) {
     chngBg.style.backgroundImage = "url('" + currentLoc.bgImage + "')";
-  };
+  }
 
-  // Show hint that items can be used during exploration
-  const slotElements = document.querySelectorAll(".inventory-grid .slot");
-  slotElements.forEach(function (el, index) {
-    const slot = inventory.slots[index];
-    if (slot && game.phase === "exploration") {
-      const def = itemDefs[slot.id];
-      if (def && (def.type === "heal" || def.type === "ammo")) {
-        el.style.cursor = "pointer";
-      }
-    }
+  // ==== DYNAMICALLY ADD/REMOVE SPECIAL LOCATION BUTTONS ====
+  const locationGrid = document.querySelector(".location-grid");
+
+  // Remove old special location buttons
+  locationGrid.querySelectorAll(".location-btn[data-special='true']").forEach(function (btn) {
+    btn.remove();
   });
+
+  // Add special location buttons if map is available
+  if (game.specialLocationAvailable) {
+    Object.entries(specialLocations).forEach(function ([key, loc]) {
+      const btn = document.createElement("button");
+      btn.className = "location-btn";
+      btn.dataset.location = key;
+      btn.dataset.special = "true";
+      btn.textContent = "🗺️ " + loc.name + (loc.waveType === "human" ? " (Human Wave)" : " (Zombie Wave)");
+      btn.disabled = game.explorationDone;
+      if (game.explorationDone) btn.classList.add("disabled-btn");
+
+      btn.addEventListener("click", function () {
+        if (game.explorationDone) return;
+        // Consume the map
+        game.hasMap = false;
+        game.specialLocationAvailable = false;
+        // Set wave type based on location
+        game.currentWaveType = loc.waveType;
+        resolveExploration(key);
+      });
+
+      locationGrid.appendChild(btn);
+    });
+  }
 }
 
 function renderInventory() {
@@ -1439,7 +1970,7 @@ function updateActionButtons() {
   const shootBtn = document.getElementById("shoot-btn");
   const meleeBtn = document.getElementById("melee-btn");
   const reloadBtn = document.getElementById("reload-btn");
-  const useItemBtn = document.getElementById("use-item-btn");
+  const dismantleBtn = document.getElementById("dismantle-btn");
   const fleeBtn = document.getElementById("flee-btn");
 
   const inBattle = game.phase === "battle";
@@ -1448,9 +1979,128 @@ function updateActionButtons() {
   meleeBtn.disabled = !inBattle || !inventory.melee || inventory.melee.currentDurability <= 0;
   reloadBtn.disabled = !inBattle || !inventory.gun || inventory.gun.currentAmmo >= inventory.gun.maxAmmo;
 
-  const hasItems = inventory.slots.some(function (slot) { return slot !== null; });
-  useItemBtn.disabled = !inBattle || !hasItems;
-  fleeBtn.disabled = !inBattle || game.isBossWave;
+  dismantleBtn.disabled = false; // dismantle is always available
+  fleeBtn.disabled = !inBattle;
+}
+
+// ==== DISMANTLE SYSTEM ====
+function toggleDismantleMode() {
+  dismantleMode = !dismantleMode;
+  const btn = document.getElementById("dismantle-btn");
+  if (dismantleMode) {
+    btn.classList.add("dismantle-active");
+    logBattle("🔧 Dismantle mode ON — select an inventory item to dismantle.");
+  } else {
+    btn.classList.remove("dismantle-active");
+    logBattle("🔧 Dismantle mode OFF.");
+  }
+  updateDismantleSlotHighlights();
+}
+
+function updateDismantleSlotHighlights() {
+  document.querySelectorAll(".inventory-grid .slot").forEach(function (el, index) {
+    if (dismantleMode && inventory.slots[index]) {
+      el.classList.add("dismantle-highlight");
+    } else {
+      el.classList.remove("dismantle-highlight");
+    }
+  });
+}
+
+function getDismantleMaterials(itemId, qty) {
+  const recipe = dismantleRecipes[itemId];
+  if (!recipe) return null;
+  const result = {};
+  Object.entries(recipe).forEach(function ([mat, amount]) {
+    result[mat] = amount * qty;
+  });
+  return result;
+}
+
+function formatMaterials(mats) {
+  return Object.entries(mats).map(function ([key, amount]) {
+    return amount + "x " + materialDefs[key].name;
+  }).join(", ");
+}
+
+function openDismantlePopup(slotIndex) {
+  const slot = inventory.slots[slotIndex];
+  if (!slot) return;
+
+  const recipe = dismantleRecipes[slot.id];
+  if (!recipe) {
+    logBattle("❌ This item cannot be dismantled.");
+    return;
+  }
+
+  dismantlePendingSlot = slotIndex;
+  dismantleQty = 1;
+
+  const def = itemDefs[slot.id];
+  const itemName = def ? def.name : slot.id;
+
+  document.getElementById("dismantle-message").textContent =
+    "Dismantle " + itemName + "?";
+
+  // Show quantity selector only for stacks
+  const qtySection = document.getElementById("dismantle-quantity");
+  if (slot.quantity > 1) {
+    qtySection.classList.remove("hidden");
+  } else {
+    qtySection.classList.add("hidden");
+  }
+
+  updateDismantlePopupDisplay();
+  document.getElementById("dismantle-popup").classList.remove("hidden");
+}
+
+function updateDismantlePopupDisplay() {
+  const slot = inventory.slots[dismantlePendingSlot];
+  if (!slot) return;
+
+  document.getElementById("dismantle-qty-display").textContent = dismantleQty;
+
+  const mats = getDismantleMaterials(slot.id, dismantleQty);
+  document.getElementById("dismantle-materials").textContent =
+    "You will receive: " + formatMaterials(mats);
+}
+
+function confirmDismantle() {
+  const slotIndex = dismantlePendingSlot;
+  const slot = inventory.slots[slotIndex];
+  if (!slot) return;
+
+  const mats = getDismantleMaterials(slot.id, dismantleQty);
+  if (!mats) return;
+
+  // Give materials
+  Object.entries(mats).forEach(function ([key, amount]) {
+    player_materials[key] += amount;
+  });
+
+  const def = itemDefs[slot.id];
+  const itemName = def ? def.name : slot.id;
+
+  logBattle("🔧 Dismantled " + dismantleQty + "x " + itemName + " → " + formatMaterials(mats));
+
+  // Remove items from slot
+  slot.quantity -= dismantleQty;
+  if (slot.quantity <= 0) {
+    inventory.slots[slotIndex] = null;
+  }
+
+  dismantlePendingSlot = null;
+  dismantleQty = 1;
+  document.getElementById("dismantle-popup").classList.add("hidden");
+
+  renderAll();
+  updateDismantleSlotHighlights();
+}
+
+function cancelDismantle() {
+  dismantlePendingSlot = null;
+  dismantleQty = 1;
+  document.getElementById("dismantle-popup").classList.add("hidden");
 }
 
 function setupEventListeners() {
@@ -1459,14 +2109,37 @@ function setupEventListeners() {
   document.getElementById("reload-btn").addEventListener("click", playerReload);
   document.getElementById("flee-btn").addEventListener("click", attemptFlee);
 
-  document.getElementById("use-item-btn").addEventListener("click", function () {
-    logBattle("Click an inventory slot to use an item");
+  document.getElementById("dismantle-btn").addEventListener("click", function () {
+    toggleDismantleMode();
   });
 
   document.querySelectorAll(".inventory-grid .slot").forEach(function (el, index) {
     el.addEventListener("click", function () {
-      useItem(index);
+      if (dismantleMode) {
+        openDismantlePopup(index);
+      } else {
+        useItem(index);
+      }
     });
+  });
+
+  // Dismantle popup buttons
+  document.getElementById("dismantle-confirm").addEventListener("click", confirmDismantle);
+  document.getElementById("dismantle-cancel").addEventListener("click", cancelDismantle);
+
+  document.getElementById("dismantle-plus").addEventListener("click", function () {
+    const slot = inventory.slots[dismantlePendingSlot];
+    if (slot && dismantleQty < slot.quantity) {
+      dismantleQty++;
+      updateDismantlePopupDisplay();
+    }
+  });
+
+  document.getElementById("dismantle-minus").addEventListener("click", function () {
+    if (dismantleQty > 1) {
+      dismantleQty--;
+      updateDismantlePopupDisplay();
+    }
   });
 
   document.querySelectorAll(".location-btn").forEach(function (btn) {
@@ -1479,25 +2152,41 @@ function setupEventListeners() {
 
   document.getElementById("start-wave-btn").addEventListener("click", startWave);
 
+  // ==== TOGGLE BASE PANELS (click again to close) ====
   document.getElementById("base-skills-btn").addEventListener("click", function () {
-    document.getElementById("skill-panel").classList.remove("hidden");
+    const panel = document.getElementById("skill-panel");
+    const isOpen = !panel.classList.contains("hidden");
+    document.getElementById("skill-panel").classList.add("hidden");
     document.getElementById("craft-panel").classList.add("hidden");
     document.getElementById("upgrade-panel").classList.add("hidden");
-    renderSkillPanel();
+    if (!isOpen) {
+      panel.classList.remove("hidden");
+      renderSkillPanel();
+    }
   });
 
   document.getElementById("base-craft-btn").addEventListener("click", function () {
-    document.getElementById("craft-panel").classList.remove("hidden");
+    const panel = document.getElementById("craft-panel");
+    const isOpen = !panel.classList.contains("hidden");
     document.getElementById("skill-panel").classList.add("hidden");
+    document.getElementById("craft-panel").classList.add("hidden");
     document.getElementById("upgrade-panel").classList.add("hidden");
-    renderCraftPanel();
+    if (!isOpen) {
+      panel.classList.remove("hidden");
+      renderCraftPanel();
+    }
   });
 
   document.getElementById("base-upgrade-btn").addEventListener("click", function () {
-    document.getElementById("upgrade-panel").classList.remove("hidden");
+    const panel = document.getElementById("upgrade-panel");
+    const isOpen = !panel.classList.contains("hidden");
     document.getElementById("skill-panel").classList.add("hidden");
     document.getElementById("craft-panel").classList.add("hidden");
-    renderUpgradePanel();
+    document.getElementById("upgrade-panel").classList.add("hidden");
+    if (!isOpen) {
+      panel.classList.remove("hidden");
+      renderUpgradePanel();
+    }
   });
 
   document.getElementById("close-skill-panel").addEventListener("click", function () {
@@ -1573,6 +2262,14 @@ function initGame() {
   addItem("medkit");
   addItem("pistolAmmo");
 
+  // NEW: Player starts with 1 armor plate
+  armor.plates = [];
+  armor.maxPlates = 3;
+  armor.tier = 1;
+  armor.modsOwned = {};
+  armor.activeMod = null;
+  armor.plates.push({ currentArmor: getArmorTierMax() });
+
   // Reset materials
   Object.keys(player_materials).forEach(function (k) { player_materials[k] = 0; });
 
@@ -1583,6 +2280,9 @@ function initGame() {
   game.currentEnemyIndex = 0;
   game.isBossWave = false;
   game.explorationDone = false;
+  game.hasMap = false;
+  game.specialLocationAvailable = false;
+  game.currentWaveType = "zombie";
 
   battleLog = [];
   explorationLog = [];
@@ -1598,17 +2298,75 @@ function renderCraftPanel() {
     "Plates: " + armor.plates.length + "/" + armor.maxPlates +
     " | Tier: T" + armor.tier +
     " | Scrap Metal: " + player_materials.scrapMetal +
+    " | Cloth: " + player_materials.cloth +
     " | Duct Tape: " + player_materials.ductTape;
 
   // Craft button state
   const craftBtn = document.getElementById("craft-plate-btn");
-  craftBtn.disabled = armor.plates.length >= armor.maxPlates || player_materials.scrapMetal < 8;
+  craftBtn.disabled = armor.plates.length >= armor.maxPlates || player_materials.scrapMetal < 3;
 
   // Repair button state
   const repairBtn = document.getElementById("repair-plate-btn");
   const max = getArmorTierMax();
   const anyDamaged = armor.plates.some(function (p) { return p.currentArmor < max; });
   repairBtn.disabled = armor.plates.length === 0 || player_materials.ductTape < 2 || !anyDamaged;
+
+  // ==== ARMOR TIER UPGRADE SECTION ====
+  let tierSection = document.getElementById("armor-tier-section");
+  if (!tierSection) {
+    tierSection = document.createElement("div");
+    tierSection.id = "armor-tier-section";
+    tierSection.style.margin = "10px 0";
+    // Insert after repair button
+    repairBtn.parentNode.insertBefore(tierSection, repairBtn.nextSibling);
+  }
+  tierSection.innerHTML = "";
+
+  if (armor.tier < 3) {
+    const nextTier = armor.tier + 1;
+    let costText = "";
+    let canAfford = false;
+
+    if (nextTier === 2) {
+      costText = "Upgrade to T2 (1 Scrap Metal + 1 Cloth + 1 Duct Tape)";
+      canAfford = player_materials.scrapMetal >= 1 && player_materials.cloth >= 1 && player_materials.ductTape >= 1;
+    } else if (nextTier === 3) {
+      costText = "Upgrade to T3 (3 Scrap Metal + 2 Cloth + 2 Duct Tape)";
+      canAfford = player_materials.scrapMetal >= 3 && player_materials.cloth >= 2 && player_materials.ductTape >= 2;
+    }
+
+    const tierBtn = document.createElement("button");
+    tierBtn.textContent = costText;
+    tierBtn.style.display = "block";
+    tierBtn.style.width = "100%";
+    tierBtn.style.margin = "8px 0";
+    tierBtn.disabled = !canAfford;
+    tierBtn.addEventListener("click", function () {
+      if (nextTier === 2) {
+        player_materials.scrapMetal -= 1;
+        player_materials.cloth -= 1;
+        player_materials.ductTape -= 1;
+      } else if (nextTier === 3) {
+        player_materials.scrapMetal -= 3;
+        player_materials.cloth -= 2;
+        player_materials.ductTape -= 2;
+      }
+      armor.tier = nextTier;
+      // Upgrade existing plates to new tier max
+      const newMax = getArmorTierMax();
+      armor.plates.forEach(function (p) {
+        p.currentArmor = newMax;
+      });
+      renderCraftPanel();
+      renderHeader();
+    });
+    tierSection.appendChild(tierBtn);
+  } else {
+    const maxMsg = document.createElement("p");
+    maxMsg.textContent = "Armor Tier: MAX (T3)";
+    maxMsg.style.color = "#5a5";
+    tierSection.appendChild(maxMsg);
+  }
 
   // Armor Mods
   const modList = document.getElementById("armor-mod-list");
@@ -1632,7 +2390,6 @@ function renderCraftPanel() {
 
     const btn = document.createElement("button");
     if (!owned) {
-      // Craft button
       const canAfford = (player_materials.scrapMetal >= def.cost.scrapMetal) &&
         (player_materials.cloth >= def.cost.cloth);
       btn.textContent = "Craft";
@@ -1642,7 +2399,6 @@ function renderCraftPanel() {
         player_materials.cloth -= def.cost.cloth;
         armor.modsOwned[key] = true;
         armor.activeMod = key;
-        // Handle Scav Sling: add extra slot
         if (key === "scavSling" && inventory.slots.length < getMaxSlots()) {
           inventory.slots.push(null);
         }
@@ -1651,24 +2407,17 @@ function renderCraftPanel() {
         renderInventory();
       });
     } else {
-      // Select / Deselect
       btn.textContent = isActive ? "Unequip" : "Equip";
       btn.addEventListener("click", function () {
         if (isActive) {
           armor.activeMod = null;
-          // Remove Scav Sling extra slot if unequipping
           if (key === "scavSling") {
             const maxSlots = getMaxSlots();
             while (inventory.slots.length > maxSlots) {
-              const removed = inventory.slots.pop();
-              if (removed) {
-                // Try to find an empty slot to move it to
-                // If can't, item is lost (edge case)
-              }
+              inventory.slots.pop();
             }
           }
         } else {
-          // If switching from scavSling to something else, shrink slots
           if (armor.activeMod === "scavSling") {
             const newMax = 6;
             while (inventory.slots.length > newMax) {
@@ -1676,7 +2425,6 @@ function renderCraftPanel() {
             }
           }
           armor.activeMod = key;
-          // If equipping scavSling, expand
           if (key === "scavSling" && inventory.slots.length < getMaxSlots()) {
             inventory.slots.push(null);
           }
@@ -1704,12 +2452,47 @@ function renderUpgradePanel() {
     usedMsg.classList.add("hidden");
   }
 
-  // Only show weapons the player currently owns
-  const ownedWeaponKeys = [];
-  if (inventory.gun) ownedWeaponKeys.push(inventory.gun.key);
-  // Melee weapons don't have upgrade paths, but check anyway
-  // Only pistol, shotgun, ar have upgrades
+  // ==== MELEE REPAIR SECTION ====
+  if (inventory.melee) {
+    const meleeDiv = document.createElement("div");
+    meleeDiv.className = "weapon-track";
 
+    const meleeTitle = document.createElement("h4");
+    meleeTitle.textContent = inventory.melee.name + " (Melee)";
+    meleeDiv.appendChild(meleeTitle);
+
+    const durPercent = Math.round((inventory.melee.currentDurability / inventory.melee.maxDurability) * 100);
+    const durInfo = document.createElement("p");
+    durInfo.style.fontSize = "13px";
+    durInfo.style.color = "#aaa";
+    durInfo.textContent = "Durability: " + durPercent + "% (" + inventory.melee.currentDurability + "/" + inventory.melee.maxDurability + ")";
+    meleeDiv.appendChild(durInfo);
+
+    const repairRow = document.createElement("div");
+    repairRow.className = "tier-row available";
+
+    const repairInfo = document.createElement("span");
+    repairInfo.textContent = "Full Repair — Cost: 1 Scrap Metal";
+    repairRow.appendChild(repairInfo);
+
+    const repairBtn = document.createElement("button");
+    repairBtn.textContent = "Repair";
+    const needsRepair = inventory.melee.currentDurability < inventory.melee.maxDurability;
+    repairBtn.disabled = !needsRepair || player_materials.scrapMetal < 1;
+    repairBtn.addEventListener("click", function () {
+      if (player_materials.scrapMetal < 1) return;
+      player_materials.scrapMetal -= 1;
+      inventory.melee.currentDurability = inventory.melee.maxDurability;
+      renderUpgradePanel();
+      renderHeader();
+      renderInventory();
+    });
+    repairRow.appendChild(repairBtn);
+    meleeDiv.appendChild(repairRow);
+    container.appendChild(meleeDiv);
+  }
+
+  // ==== GUN UPGRADE TRACKS ====
   ["pistol", "shotgun", "ar"].forEach(function (weaponKey) {
     const track = weaponUpgrades[weaponKey];
     if (!track) return;
@@ -1729,11 +2512,9 @@ function renderUpgradePanel() {
       row.className = "tier-row";
 
       if (index < state.currentTier) {
-        // Already purchased
         row.classList.add("purchased");
         row.innerHTML = '<span>' + tier.name + ' — ' + tier.desc + '</span><span>✓ Owned</span>';
       } else if (index === state.currentTier) {
-        // Next available tier
         const unlocked = tier.unlockCondition();
         if (!unlocked) {
           row.classList.add("locked");
@@ -1747,11 +2528,14 @@ function renderUpgradePanel() {
 
           const btn = document.createElement("button");
           btn.textContent = "Upgrade";
-          btn.disabled = upgradeUsedThisVisit || !hasWeapon;
+          // FIX: Only disable if already upgraded this visit, NOT based on weapon ownership
+          btn.disabled = upgradeUsedThisVisit;
           btn.addEventListener("click", function () {
-            if (upgradeUsedThisVisit || !hasWeapon) return;
-            // Apply upgrade
-            tier.apply(inventory.gun);
+            if (upgradeUsedThisVisit) return;
+            // Apply upgrade to the weapon if currently equipped
+            if (hasWeapon) {
+              tier.apply(inventory.gun);
+            }
             state.currentTier++;
             upgradeUsedThisVisit = true;
             renderUpgradePanel();
@@ -1761,7 +2545,6 @@ function renderUpgradePanel() {
           row.appendChild(btn);
         }
       } else {
-        // Future tier
         row.classList.add("locked");
         row.innerHTML = '<span>' + tier.name + ' — ' + tier.desc + '</span><span>🔒</span>';
       }

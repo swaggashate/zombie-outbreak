@@ -1,7 +1,3 @@
-// Search =============]=======
-resolveExploration
-//============================
-
 const zombieTypes = {
   walker: {
     name: "Walker",
@@ -2557,3 +2553,4 @@ function renderUpgradePanel() {
 }
 
 document.addEventListener("DOMContentLoaded", initGame);
+

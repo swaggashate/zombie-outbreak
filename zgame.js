@@ -1,3 +1,7 @@
+// Search ====================
+resolveExploration
+//============================
+
 const zombieTypes = {
   walker: {
     name: "Walker",
@@ -151,7 +155,7 @@ const specialLocations = {
 };
 
 const weapons = {
-  // === GUNS ===
+  // GUNS
   pistol: {
     name: "Pistol",
     type: "ranged",
@@ -185,7 +189,7 @@ const weapons = {
     maxAmmo: 10
   },
 
-  // === MELEE ===
+  // MELEE
   bat: {
     name: "Baseball Bat",
     type: "melee",
@@ -426,24 +430,19 @@ const player = {
   skills: {
     evasion: 0,        // max 10 → +2% dodge per point, cap 25%
     quickStep: 0,       // max 5  → +2% double-turn per point
-    toughness: 0,       // max 10 → +10 maxHP per point
+    toughness: 0,       // no cap → +10 maxHP per point
     critTraining: 0,    // max 5  → +1.5% crit per point (applied to weapon)
     fieldMedic: 0,      // max 5  → +15% heal effectiveness per point
     scavenger: 0,       // max 5  → +10% chance for bonus loot per point
     adrenaline: 0,       // max 3  → below 30% HP: +5% dodge & +10% damage per point
-    armorCapacity: 0,
+    armorCapacity: 0,    // increases armor holding capacity - one upgrade
     aggression: 0,
   }
 };
 
-// --- Armor State ---
+// Armor State
 const armor = {
-  plates: [],          // array of { currentArmor: N } objects
-  maxPlates: 3,        // increases to 5 with armorCapacity skill
-  tier: 1,             // 1, 2, or 3
-  modsOwned: {},       // { spikedPads: true, biteGuard: true, ... }
-  activeMod: null,     // key string or null
-  // Per-battle flags (reset each battle)
+  plates: [],
   biteGuardUsed: false,
   shockPaddingUsed: false,
   t3DodgeBoostActive: false
@@ -456,14 +455,14 @@ function getArmorTierMax() {
   return 45;
 }
 
-// --- Kill Tracker (for weapon unlock conditions) ---
+// Kill Tracker (for weapon unlock conditions)
 const killTracker = {
   runnerKills: 0,
   bruteKills: 0,
   bossKills: 0
 };
 
-// --- Weapon Upgrade State ---
+// Weapon Upgrade State
 // Tracks which tier each weapon is upgraded to (0 = no upgrades purchased)
 const weaponUpgradeState = {
   pistol: { currentTier: 0 },
@@ -471,11 +470,10 @@ const weaponUpgradeState = {
   ar: { currentTier: 0 }
 };
 
-let upgradeUsedThisVisit = false;  // reset when entering base
+let upgradeUsedThisVisit = false;
 
 const inventory = {
-  gun: null,      // will hold a live weapon instance (with currentAmmo)
-  melee: null,    // will hold a live weapon instance (with currentDurability)
+  gun: null,
   slots: [null, null, null, null, null, null]
 };
 
@@ -538,7 +536,7 @@ function createBoss(waveNumber) {
   };
 }
 
-// ==== HUMAN ENEMY CREATION ====
+// HUMAN ENEMY CREATION
 function createHumanEnemy(typeId, waveNumber) {
   const template = humanEnemyTypes[typeId];
   return {
@@ -570,7 +568,6 @@ function createHumanBoss(waveNumber) {
 
 // Generate a human wave (for special locations)
 function generateHumanWave(waveNumber) {
-  // Check for human boss every 5th wave
   if (waveNumber % 5 === 0 && Math.random() < 0.5) {
     return [createHumanBoss(waveNumber)];
   }
@@ -589,7 +586,6 @@ function generateHumanWave(waveNumber) {
 
 // Handle human enemy drops after defeat
 function handleHumanDrop(enemy) {
-  // All human enemies have a rare chance to drop a map
   if (!game.hasMap && Math.random() < 0.10) {
     game.hasMap = true;
     game.specialLocationAvailable = true;
@@ -597,7 +593,6 @@ function handleHumanDrop(enemy) {
   }
 
   if (enemy.isBoss) {
-    // Ringleader drops handled separately (XP only, no special item drop function)
     return;
   }
 
@@ -613,7 +608,6 @@ function handleHumanDrop(enemy) {
     addFoundPlate(false);
     logBattle("🛡️ The " + enemy.name + " dropped a full armor plate!");
   } else if (drop === "guaranteedWeapon") {
-    // Pick a random weapon to offer
     const weaponPool = ["shotgun", "ar", "katana", "machete", "combatKnife"];
     const foundKey = weaponPool[Math.floor(Math.random() * weaponPool.length)];
     logBattle("🔥 The " + enemy.name + " dropped a " + weapons[foundKey].name + "!");
@@ -629,7 +623,7 @@ function handleHumanDrop(enemy) {
 }
 
 function xpToNextLevel() {
-  return player.level * 50;  // Level 1→2 = 50xp, 2→3 = 100xp, etc.
+  return player.level * 50;
 }
 
 function checkLevelUp() {
@@ -652,9 +646,8 @@ function applySkills() {
   const newMax = 100 + (player.skills.toughness * 10);
   const diff = newMax - player.maxHP;
   player.maxHP = newMax;
-  if (diff > 0) player.hp += diff;  // gain the new HP immediately
+  if (diff > 0) player.hp += diff;
 
-  // Armor Capacity skill: if purchased, max plates = 5
   if (player.skills.armorCapacity >= 1) {
     armor.maxPlates = 5;
   }
@@ -677,28 +670,23 @@ function applyDamageWithArmor(rawDamage) {
 
   const plate = getActivePlate();
   if (!plate) {
-    // No armor — full damage to HP
     player.hp -= rawDamage;
     if (player.hp < 0) player.hp = 0;
     return rawDamage;
   }
 
   const armorDmg = Math.floor(rawDamage * 0.70);
-  const hpDmg = rawDamage - armorDmg;  // 30%
+  const hpDmg = rawDamage - armorDmg;
 
-  // Apply to plate
   plate.currentArmor -= armorDmg;
 
-  // Apply 30% to HP always
   player.hp -= hpDmg;
   if (player.hp < 0) player.hp = 0;
 
   if (plate.currentArmor <= 0) {
-    // Plate destroyed
     armor.plates.shift();
     logBattle("💥 Armor plate destroyed!");
 
-    // T3 bonus: +10% dodge for 1 turn
     if (armor.tier >= 3) {
       armor.t3DodgeBoostActive = true;
       player.dodgeChance += 0.10;
@@ -746,7 +734,7 @@ function repairAllPlates() {
   return true;
 }
 
-// CHANGED: If at max plates, convert found plate to scrap metal based on durability %
+// If at max plates, convert found plate to scrap metal based on durability %
 function addFoundPlate(used) {
   const max = getArmorTierMax();
   const hp = used ? Math.floor(max * (0.3 + Math.random() * 0.4)) : max;
@@ -792,7 +780,7 @@ function generateWave(waveNumber) {
 
   // Chance to add 1-2 human enemies to zombie waves (not boss waves)
   if (!isBossWave(waveNumber) && Math.random() < 0.3) {
-    const humanCount = 1 + Math.floor(Math.random() * 2); // 1 or 2
+    const humanCount = 1 + Math.floor(Math.random() * 2);
     const humanPool = ["scavenger", "raider"];
     if (waveNumber >= 8) humanPool.push("tank");
     for (let i = 0; i < humanCount; i++) {
@@ -887,7 +875,7 @@ function addItem(itemId) {
     slot => slot && slot.id === itemId
   );
 
-  // ===== NEW: Maps cannot stack =====
+  // Maps cannot stack
   if (itemId === "map") {
     const emptySlot = inventory.slots.findIndex(s => s === null);
 
@@ -929,7 +917,7 @@ function addItem(itemId) {
 }
 
 function useItem(slotIndex) {
-  // CHANGED: Only allow item use during battle (HP/ammo refill at base now)
+  // Only allow item use during battle (HP/ammo refill at base now)
   if (game.phase !== "battle") return;
 
   const slot = inventory.slots[slotIndex];
@@ -954,7 +942,7 @@ function useItem(slotIndex) {
     logFn("Used " + def.name + " — healed " + healAmount + " HP");
   }
 
-  // FIX: Ammo items now fill mag to max. Also check ammo matches gun type.
+  // Ammo items fill mag to max. Also check ammo matches gun type.
   if (def.type === "ammo") {
     if (inventory.gun) {
       // Check ammo matches gun
@@ -966,14 +954,14 @@ function useItem(slotIndex) {
 
       if (!validAmmo) {
         logFn("Wrong ammo type for your " + inventory.gun.name + "!");
-        return;  // Don't consume
+        return;
       }
 
-      inventory.gun.currentAmmo = inventory.gun.maxAmmo;  // FIX: fill to max
+      inventory.gun.currentAmmo = inventory.gun.maxAmmo;
       logFn("Used " + def.name + " — fully reloaded " + inventory.gun.name + " (" + inventory.gun.maxAmmo + "/" + inventory.gun.maxAmmo + ")");
     } else {
       logFn("No gun equipped to reload!");
-      return;  // Don't consume the item
+      return;
     }
   }
 
@@ -1024,7 +1012,6 @@ function resolveExploration(locationKey) {
 
   const lootTable = location.lootTable;
 
-  // Define drop chances: fair distribution, not too rare
   const dropChances = [
     { drops: 1, chance: 0.4 },
     { drops: 2, chance: 0.3 },
@@ -1044,7 +1031,7 @@ function resolveExploration(locationKey) {
     }
   }
 
-  // ===== NEW: Roll drops and show item names in log =====
+  // Roll drops and show item names in log
 
   let foundItems = [];
 
@@ -1066,7 +1053,7 @@ function resolveExploration(locationKey) {
     logExploration("Found items, but inventory is full!");
   }
 
-  // Scavenger bonus (unchanged, adds extra item if applicable)
+  // Scavenger bonus
   const scavengerChance = player.skills.scavenger * 0.10;
   if (Math.random() < scavengerChance) {
     const bonusItem = lootTable[Math.floor(Math.random() * lootTable.length)];
@@ -1108,7 +1095,7 @@ function resolveExploration(locationKey) {
   }
 
   // Chance to find a map at any location (if you don't already have one)
-  // ===== NEW: Map drop =====
+  // Map drop
   if (Math.random() < 0.05) {
     if (addItem("map")) {
       game.specialLocationAvailable = true;
@@ -1242,8 +1229,6 @@ function playerShoot() {
   let adrenalineActive = false;
   if (player.hp / player.maxHP < 0.3 && player.skills.adrenaline > 0) {
     adrenalineActive = true;
-    // Temporarily boost dodge (already in player.dodgeChance via applySkills? No — adrenaline is conditional)
-    // Apply damage bonus after result
   }
 
   const result = calculateAttack(player, enemy, gun);
@@ -1387,7 +1372,7 @@ function playerMelee() {
   else enemyTurn();
 }
 
-// FIX: Reloading now consumes matching ammo from inventory. No ammo = can't reload.
+// Reloading consumes matching ammo from inventory. No ammo = can't reload.
 function playerReload() {
   if (game.phase !== "battle") return;
   const gun = inventory.gun;
@@ -1421,13 +1406,13 @@ function playerReload() {
     inventory.slots[slotIndex] = null;
   }
 
-  gun.currentAmmo = gun.maxAmmo;  // FIX: always fill to max
+  gun.currentAmmo = gun.maxAmmo;
   logBattle("Reloaded " + gun.name + " (" + gun.maxAmmo + "/" + gun.maxAmmo + ")");
   renderAll();
   enemyTurn();
 }
 
-// CHANGED: Flee now works on boss waves with scaling chance. Fleeing boss = lose 1 random item.
+// Flee works on boss waves with scaling chance. Fleeing boss = lose 1 random item.
 function attemptFlee() {
   if (game.phase !== "battle") return;
 
@@ -2553,4 +2538,3 @@ function renderUpgradePanel() {
 }
 
 document.addEventListener("DOMContentLoaded", initGame);
-

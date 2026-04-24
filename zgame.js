@@ -1,5 +1,5 @@
 // Search ====================
-resolveExploration
+
 //============================
 
 const zombieTypes = {
@@ -236,7 +236,12 @@ const itemDefs = {
   shotgunAmmo: { name: "Shotgun Ammo", type: "ammo", value: 2 },
   arAmmo: { name: "AR Ammo", type: "ammo", value: 30},
   armorPlate: { name: "Armor Plate", type: "armor", value: 1 },
-  map: { name: "Map", type: "special", value: 0 }
+  map: { name: "Map", type: "special", value: 0 },
+  armorPatch: { name: "Armor Patch", type: "combat", value: 0 },
+  adrenalineShot: { name: "Adrenaline Shot", type: "combat", value: 0 },
+  painkillerDose: { name: "Painkiller Dose", type: "combat", value: 0 },
+  molotov: { name: "Molotov", type: "combat", value: 0 },
+  rationPack: { name: "Ration Pack", type: "combat", value: 0 },
 };
 
 const locations = {
@@ -300,6 +305,40 @@ const dismantleRecipes = {
   shotgunAmmo: { scrapMetal: 1 },
   arAmmo: { scrapMetal: 1 },
   food: { scrapMetal: 1 },
+};
+
+// ==== CRAFTABLE ITEMS ====
+const craftableItems = {
+  armorPatch: {
+    name: "Armor Patch",
+    desc: "Temporarily increase armor for the rest of the battle",
+    cost: { cloth: 1, scrapMetal: 1, ductTape: 1 },
+    itemId: "armorPatch"
+  },
+  adrenalineShot: {
+    name: "Adrenaline Shot",
+    desc: "Gain a temporary dodge chance and damage buff",
+    cost: { chemicals: 1, cloth: 1 },
+    itemId: "adrenalineShot"
+  },
+  painkillerDose: {
+    name: "Painkiller Dose",
+    desc: "Reduce incoming damage for the next 3 turns",
+    cost: { chemicals: 2 },
+    itemId: "painkillerDose"
+  },
+  molotov: {
+    name: "Molotov",
+    desc: "Damage on use + Burn damage each turn for 3-5 turns",
+    cost: { chemicals: 2, cloth: 1 },
+    itemId: "molotov"
+  },
+  rationPack: {
+    name: "Ration Pack",
+    desc: "Restore a little HP and a small dodge chance boost",
+    cost: { food: 1, chemicals: 1 },
+    itemId: "rationPack"
+  }
 };
 
 const armorModDefs = {
@@ -412,6 +451,25 @@ const skillDefs = {
   aggression: { name: "Aggression", max: Infinity, desc: "+2% overall damage increase per point (no cap)"}
 };
 
+// ==== XP TIERS ====
+const XP_SMALL = 8;
+const XP_AVERAGE = 18;
+const XP_MODERATE = 35;
+
+// ==== KILL MILESTONES ====
+const killMilestones = [10, 25, 50, 100, 175, 275, 400, 600, 999];
+let totalKillCount = 0;
+let currentMilestoneIndex = 0;
+
+// ==== COMBAT ITEM STORAGE (separate from inventory) ====
+const combatItemStorage = {
+  armorPatch: 0,
+  adrenalineShot: 0,
+  painkillerDose: 0,
+  molotov: 0,
+  rationPack: 0
+};
+
 const player_materials = {
   scrapMetal: 0,
   cloth: 0,
@@ -495,6 +553,14 @@ let explorationLog = [];
 let dismantleMode = false;
 let dismantlePendingSlot = null;
 let dismantleQty = 1;
+
+// ==== COMBAT ITEM BUFF STATE ====
+let armorPatchActive = false;
+let adrenalineShotActive = false;
+let adrenalineShotDodgeBonus = 0;
+let painkillerTurnsLeft = 0;
+let molotovTurnsLeft = 0;
+let molotovDamagePerTurn = 8;
 
 let shotFiredAtCurrentEnemy = false;  // for Reinforced Action (first shot bonus)
 let controlledBurstActive = false;    // for AR T2 (shoot twice)
@@ -635,6 +701,62 @@ function checkLevelUp() {
   }
 }
 
+function getCurrentMilestoneTarget() {
+  if (currentMilestoneIndex >= killMilestones.length) return Infinity;
+  return killMilestones[currentMilestoneIndex];
+}
+
+function getPreviousMilestoneTarget() {
+  if (currentMilestoneIndex === 0) return 0;
+  return killMilestones[currentMilestoneIndex - 1];
+}
+
+function checkKillMilestone() {
+  const target = getCurrentMilestoneTarget();
+  if (target === Infinity) return;
+  if (totalKillCount >= target) {
+    const xpGain = Math.floor(XP_MODERATE * (1 + (game.waveNumber - 1) * 0.1));
+    player.xp += xpGain;
+    logBattle("🏆 KILL MILESTONE (" + target + " kills)! +" + xpGain + " XP!");
+    currentMilestoneIndex++;
+    checkLevelUp();
+  }
+}
+
+function grantXP(amount, reason) {
+  const scaled = Math.floor(amount * (1 + (game.waveNumber - 1) * 0.1));
+  player.xp += scaled;
+  logBattle("+" + scaled + " XP (" + reason + ")");
+  checkLevelUp();
+}
+
+function renderMilestoneBar() {
+  const target = getCurrentMilestoneTarget();
+  const prev = getPreviousMilestoneTarget();
+  const fillEl = document.getElementById("milestone-bar-fill");
+  const textEl = document.getElementById("milestone-bar-text");
+
+  if (target === Infinity) {
+    fillEl.style.width = "100%";
+    textEl.textContent = totalKillCount + " kills — ALL DONE";
+    return;
+  }
+
+  const progress = totalKillCount - prev;
+  const needed = target - prev;
+  const percent = Math.min((progress / needed) * 100, 100);
+  fillEl.style.width = percent + "%";
+  textEl.textContent = totalKillCount + " / " + target + " kills";
+}
+
+function renderCombatItemsBar() {
+  document.getElementById("ci-armorPatch").textContent = combatItemStorage.armorPatch;
+  document.getElementById("ci-adrenalineShot").textContent = combatItemStorage.adrenalineShot;
+  document.getElementById("ci-painkillerDose").textContent = combatItemStorage.painkillerDose;
+  document.getElementById("ci-molotov").textContent = combatItemStorage.molotov;
+  document.getElementById("ci-rationPack").textContent = combatItemStorage.rationPack;
+}
+
 function applySkills() {
   // Evasion: base 5% + 2% per point, cap 25%
   player.dodgeChance = Math.min(0.05 + (player.skills.evasion * 0.02), 0.25);
@@ -661,6 +783,14 @@ function getActivePlate() {
 // Apply damage through armor: 70% to armor, 30% to HP
 // If no armor, 100% to HP
 function applyDamageWithArmor(rawDamage) {
+
+  // Painkiller: reduce incoming damage by 30%
+  if (painkillerTurnsLeft > 0) {
+    rawDamage = Math.floor(rawDamage * 0.7);
+    painkillerTurnsLeft--;
+    logBattle("💊 Painkiller absorbs some damage! (" + painkillerTurnsLeft + " turns left)");
+  }
+
   // Bite Guard check: first hit each battle does -50%
   if (armor.activeMod === "biteGuard" && !armor.biteGuardUsed) {
     rawDamage = Math.floor(rawDamage * 0.5);
@@ -712,6 +842,7 @@ function craftArmorPlate() {
   }
   player_materials.scrapMetal -= 3;
   armor.plates.push({ currentArmor: getArmorTierMax() });
+  grantXP(XP_SMALL, "Crafted armor plate");
   return true;
 }
 
@@ -751,6 +882,7 @@ function addFoundPlate(used) {
 
   armor.plates.push({ currentArmor: hp });
   logExploration("🛡️ Found an armor plate! (" + (used ? "used" : "full") + ")");
+  grantXP(XP_AVERAGE, "Armor plate found");
   return true;
 }
 
@@ -917,7 +1049,7 @@ function addItem(itemId) {
 }
 
 function useItem(slotIndex) {
-  // Only allow item use during battle (HP/ammo refill at base now)
+  // Only allow item use during battle
   if (game.phase !== "battle") return;
 
   const slot = inventory.slots[slotIndex];
@@ -926,14 +1058,13 @@ function useItem(slotIndex) {
   const def = itemDefs[slot.id];
   if (!def) return;
 
-  // Only allow heal and ammo items
-  if (def.type !== "heal" && def.type !== "ammo") return;
+  // Allow heal, ammo, and combat items
+  if (def.type !== "heal" && def.type !== "ammo" && def.type !== "combat") return;
 
   const logFn = game.phase === "battle" ? logBattle : logExploration;
 
   if (def.type === "heal") {
     let healBonus = 1 + (player.skills.fieldMedic * 0.15);
-    // Medic Pouch mod: +10% more healing
     if (armor.activeMod === "medicPouch") {
       healBonus += 0.10;
     }
@@ -942,10 +1073,8 @@ function useItem(slotIndex) {
     logFn("Used " + def.name + " — healed " + healAmount + " HP");
   }
 
-  // Ammo items fill mag to max. Also check ammo matches gun type.
   if (def.type === "ammo") {
     if (inventory.gun) {
-      // Check ammo matches gun
       const gunKey = inventory.gun.key;
       const validAmmo =
         (gunKey === "pistol" && slot.id === "pistolAmmo") ||
@@ -965,6 +1094,11 @@ function useItem(slotIndex) {
     }
   }
 
+  // ==== COMBAT ITEMS ====
+  if (def.type === "combat") {
+    return;
+  }
+
   slot.quantity--;
   if (slot.quantity <= 0) {
     inventory.slots[slotIndex] = null;
@@ -972,7 +1106,61 @@ function useItem(slotIndex) {
 
   renderAll();
 
-  // Only trigger enemy turn if in battle
+  if (game.phase === "battle") {
+    enemyTurn();
+  }
+}
+
+function useCombatItem(itemId) {
+  if (game.phase !== "battle") return;
+  if (!combatItemStorage[itemId] || combatItemStorage[itemId] <= 0) return;
+
+  const enemy = getCurrentEnemy();
+
+  if (itemId === "armorPatch") {
+    armorPatchActive = true;
+    armor.plates.push({ currentArmor: 20 });
+    logBattle("🛡️ Applied Armor Patch! Temporary armor added.");
+  }
+
+  else if (itemId === "adrenalineShot") {
+    adrenalineShotActive = true;
+    adrenalineShotDodgeBonus = 0.12;
+    player.dodgeChance += adrenalineShotDodgeBonus;
+    logBattle("💉 Adrenaline Shot! +12% dodge & +20% damage for this battle.");
+  }
+
+  else if (itemId === "painkillerDose") {
+    painkillerTurnsLeft = 3;
+    logBattle("💊 Painkiller Dose! Incoming damage reduced by 30% for 3 turns.");
+  }
+
+  else if (itemId === "molotov") {
+    if (!enemy) {
+      logBattle("No target to throw at!");
+      return;
+    }
+    const directDmg = 15;
+    enemy.hp -= directDmg;
+    if (enemy.hp < 0) enemy.hp = 0;
+    const isBigEnemy = enemy.isBoss || enemy.typeId === "brute" || enemy.typeId === "tank";
+    molotovTurnsLeft = isBigEnemy ? 5 : 3;
+    molotovDamagePerTurn = 8;
+    logBattle("🔥 Molotov! " + directDmg + " direct damage + Burn for " + molotovTurnsLeft + " turns!");
+  }
+
+  else if (itemId === "rationPack") {
+    let healBonus = 1 + (player.skills.fieldMedic * 0.15);
+    if (armor.activeMod === "medicPouch") healBonus += 0.10;
+    const healAmount = Math.floor(10 * healBonus);
+    player.hp = Math.min(player.hp + healAmount, player.maxHP);
+    player.dodgeChance += 0.05;
+    logBattle("🍖 Ration Pack! Healed " + healAmount + " HP & +5% dodge for this battle.");
+  }
+
+  combatItemStorage[itemId]--;
+  renderAll();
+
   if (game.phase === "battle") {
     enemyTurn();
   }
@@ -1173,6 +1361,14 @@ function resetBattleFlags() {
   shotFiredAtCurrentEnemy = false;
   controlledBurstActive = false;
   guaranteedCrit = false;
+  armorPatchActive = false;
+  if (adrenalineShotActive) {
+    player.dodgeChance -= adrenalineShotDodgeBonus;
+  }
+  adrenalineShotActive = false;
+  adrenalineShotDodgeBonus = 0;
+  painkillerTurnsLeft = 0;
+  molotovTurnsLeft = 0;
 }
 
 function startWave() {
@@ -1225,6 +1421,11 @@ function playerShoot() {
   }
 
   shotFiredAtCurrentEnemy = true;
+
+  // Adrenaline Shot buff: +20% damage
+  if (adrenalineShotActive) {
+    damage = Math.floor(damage * 1.20);
+  }
 
   let adrenalineActive = false;
   if (player.hp / player.maxHP < 0.3 && player.skills.adrenaline > 0) {
@@ -1333,6 +1534,11 @@ function playerMelee() {
     if (player.hp < 0) player.hp = 0;
     logBattle("⚠ Too close! " + enemy.name + " claws you for " + riskDamage + " while you swing!");
     if (player.hp <= 0) { handleGameOver(); return; }
+  }
+
+  // Adrenaline Shot buff: +20% damage
+  if (adrenalineShotActive) {
+    damage = Math.floor(damage * 1.20);
   }
 
   let adrenalineActive = false;
@@ -1475,6 +1681,21 @@ function triggerDamageFlash() {
 }
 
 function enemyTurn() {
+
+  // ==== MOLOTOV BURN TICK ====
+  const burnEnemy = getCurrentEnemy();
+  if (molotovTurnsLeft > 0 && burnEnemy && burnEnemy.hp > 0) {
+    burnEnemy.hp -= molotovDamagePerTurn;
+    if (burnEnemy.hp < 0) burnEnemy.hp = 0;
+    molotovTurnsLeft--;
+    logBattle("🔥 Burn damage! " + burnEnemy.name + " takes " + molotovDamagePerTurn + " fire damage. (" + molotovTurnsLeft + " turns left)");
+    if (burnEnemy.hp <= 0) {
+      renderAll();
+      handleEnemyDefeated();
+      return;
+    }
+  }
+
   // At start of enemyTurn():
   let tempDodgeBoost = 0;
   if (player.hp / player.maxHP < 0.3 && player.skills.adrenaline > 0) {
@@ -1601,15 +1822,19 @@ function handleEnemyDefeated() {
     handleHumanDrop(enemy);
   }
 
-  // XP award
+  // XP award (kill XP unchanged)
   let xpGain = 10;
   if (enemy.isRare) xpGain = 25;
   if (enemy.isBoss) xpGain = 50;
   xpGain = Math.floor(xpGain * (1 + (game.waveNumber - 1) * 0.1));
   player.xp += xpGain;
   logBattle("+" + xpGain + " XP");
-  
+
   checkLevelUp();
+
+  // Kill milestone tracking
+  totalKillCount++;
+  checkKillMilestone();
 
   game.currentEnemyIndex++;
   
@@ -1627,9 +1852,17 @@ function handleEnemyDefeated() {
 function endWave(victory) {
   if (victory) {
     logBattle("🏆 Wave " + game.waveNumber + " complete! + 10HP!");
-    player.hp += 10
+    player.hp += 10;
+
+    // Wave completion XP
+    if (game.isBossWave) {
+      grantXP(XP_MODERATE, "Boss wave clear");
+    } else {
+      grantXP(XP_AVERAGE, "Wave clear");
+    }
   } else {
     logBattle("You fled from wave " + game.waveNumber);
+    grantXP(XP_SMALL, "Successful flee");
   }
 
   game.waveNumber++;
@@ -1694,6 +1927,8 @@ function renderAll() {
   renderExploration();
   renderInventory();
   updateActionButtons();
+  renderMilestoneBar();
+  renderCombatItemsBar();
 }
 
 // REPLACE the entire renderHeader function
@@ -1754,6 +1989,8 @@ function renderHeader() {
   } else {
     modDisplay.textContent = "Mod: None";
   }
+
+  renderCraftingSection();
 }
 
 function renderBattle() {
@@ -1897,8 +2134,17 @@ function renderExploration() {
       btn.addEventListener("click", function () {
         if (game.explorationDone) return;
         // Consume the map
+        // Consume the map
         game.hasMap = false;
         game.specialLocationAvailable = false;
+        // Remove map item from inventory
+        const mapSlotIdx = inventory.slots.findIndex(s => s && s.id === "map");
+        if (mapSlotIdx !== -1) {
+          inventory.slots[mapSlotIdx].quantity--;
+          if (inventory.slots[mapSlotIdx].quantity <= 0) {
+            inventory.slots[mapSlotIdx] = null;
+          }
+        }
         // Set wave type based on location
         game.currentWaveType = loc.waveType;
         resolveExploration(key);
@@ -1945,6 +2191,10 @@ function renderInventory() {
       el.style.cursor = "default";
     }
   });
+
+  // Update crafting section if it exists
+  renderCraftingSection();
+
 }
 
 function updateActionButtons() {
@@ -2002,6 +2252,142 @@ function formatMaterials(mats) {
   return Object.entries(mats).map(function ([key, amount]) {
     return amount + "x " + materialDefs[key].name;
   }).join(", ");
+}
+
+function hasFreeInventorySlot() {
+  const maxSlots = getMaxSlots();
+  for (let i = 0; i < maxSlots; i++) {
+    if (i >= inventory.slots.length) return true;
+    if (inventory.slots[i] === null) return true;
+  }
+  return false;
+}
+
+function canCraftItem(recipe) {
+  // Check materials
+  for (const [mat, amount] of Object.entries(recipe.cost)) {
+    // "food" is a special case — it's an inventory item (Canned Food), not a material
+    if (mat === "food") {
+      const foodSlot = inventory.slots.find(s => s && s.id === "food");
+      if (!foodSlot || foodSlot.quantity < amount) return false;
+    } else {
+      if ((player_materials[mat] || 0) < amount) return false;
+    }
+  }
+  return true;
+}
+
+function craftItem(recipeKey) {
+  const recipe = craftableItems[recipeKey];
+  if (!recipe) return;
+  if (!canCraftItem(recipe)) return;
+
+  // Consume materials
+  for (const [mat, amount] of Object.entries(recipe.cost)) {
+    if (mat === "food") {
+      const foodSlotIdx = inventory.slots.findIndex(s => s && s.id === "food");
+      if (foodSlotIdx !== -1) {
+        inventory.slots[foodSlotIdx].quantity -= amount;
+        if (inventory.slots[foodSlotIdx].quantity <= 0) {
+          inventory.slots[foodSlotIdx] = null;
+        }
+      }
+    } else {
+      player_materials[mat] -= amount;
+    }
+  }
+
+  // Add to combat item storage instead of inventory
+  combatItemStorage[recipe.itemId]++;
+  grantXP(XP_SMALL, "Crafted " + recipe.name);
+  renderAll();
+  renderCraftingSection();
+}
+
+// ==== CRAFTING SECTION (Inventory Sidebar) ====
+function renderCraftingSection() {
+  let section = document.getElementById("crafting-section");
+  if (!section) return;
+
+  // Only show crafting during base phase
+  if (game.phase !== "base") {
+    section.innerHTML = "";
+    const header = document.querySelector(".crafting-header");
+    if (header) header.style.display = "none";
+    return;
+  } else {
+    const header = document.querySelector(".crafting-header");
+    if (header) header.style.display = "";
+  }
+
+  section.innerHTML = "";
+
+  const freeSlot = true;
+
+  Object.entries(craftableItems).forEach(function ([key, recipe]) {
+    const row = document.createElement("div");
+    row.className = "craft-row";
+
+    const details = document.createElement("div");
+    details.className = "craft-details";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "craft-item-name";
+    nameEl.textContent = recipe.name;
+    details.appendChild(nameEl);
+
+    const descEl = document.createElement("div");
+    descEl.className = "craft-item-desc";
+    descEl.textContent = recipe.desc;
+    details.appendChild(descEl);
+
+    const matsEl = document.createElement("div");
+    matsEl.className = "craft-item-mats";
+
+    // Build material requirement text with color coding
+    const matParts = [];
+    let hasAll = true;
+    Object.entries(recipe.cost).forEach(function ([mat, amount]) {
+      let currentAmount;
+      let matName;
+      if (mat === "food") {
+        const foodSlot = inventory.slots.find(s => s && s.id === "food");
+        currentAmount = foodSlot ? foodSlot.quantity : 0;
+        matName = "Canned Food";
+      } else {
+        currentAmount = player_materials[mat] || 0;
+        matName = materialDefs[mat] ? materialDefs[mat].name : mat;
+      }
+      const sufficient = currentAmount >= amount;
+      if (!sufficient) hasAll = false;
+      const span = document.createElement("span");
+      span.textContent = amount + " " + matName;
+      span.style.color = sufficient ? "#8ab" : "#ff4444";
+      matParts.push(span);
+    });
+
+    matParts.forEach(function (span, i) {
+      matsEl.appendChild(span);
+      if (i < matParts.length - 1) {
+        const sep = document.createTextNode(" + ");
+        matsEl.appendChild(sep);
+      }
+    });
+
+    details.appendChild(matsEl);
+    row.appendChild(details);
+
+    const btn = document.createElement("button");
+    btn.className = "craft-btn";
+    btn.textContent = "Craft";
+    btn.disabled = !hasAll;
+    btn.addEventListener("click", function () {
+      craftItem(key);
+    });
+
+    row.appendChild(btn);
+    section.appendChild(row);
+  });
 }
 
 function openDismantlePopup(slotIndex) {
@@ -2063,6 +2449,7 @@ function confirmDismantle() {
   const itemName = def ? def.name : slot.id;
 
   logBattle("🔧 Dismantled " + dismantleQty + "x " + itemName + " → " + formatMaterials(mats));
+  grantXP(XP_SMALL, "Dismantled items");
 
   // Remove items from slot
   slot.quantity -= dismantleQty;
@@ -2223,6 +2610,16 @@ function setupEventListeners() {
     game.explorationDone = true;
     renderAll();
   });
+
+  // Combat item bar click handlers
+  document.querySelectorAll(".combat-item-slot").forEach(function (el) {
+    el.addEventListener("click", function () {
+      const idSpan = el.querySelector("span[id^='ci-']");
+      if (!idSpan) return;
+      const itemId = idSpan.id.replace("ci-", "");
+      useCombatItem(itemId);
+    });
+  });
 }
 
 function initGame() {
@@ -2267,6 +2664,11 @@ function initGame() {
 
   battleLog = [];
   explorationLog = [];
+
+  // Reset new systems
+  totalKillCount = 0;
+  currentMilestoneIndex = 0;
+  Object.keys(combatItemStorage).forEach(function (k) { combatItemStorage[k] = 0; });
 
   setupEventListeners();
   setPhase("exploration");

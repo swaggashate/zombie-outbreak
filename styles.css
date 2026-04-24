@@ -522,3 +522,45 @@ button:disabled,
   padding: 5px 14px;
   font-size: 18px;
 }
+
+/* ==== KILL MILESTONE BAR ==== */
+.milestone-display {
+  margin-top: 10px;
+}
+
+.milestone-bar {
+  width: 200px;
+  height: 18px;
+}
+
+.milestone-bar .stat-bar-fill {
+  background: #c5a800;
+  transition: width 0.4s ease;
+}
+
+/* ==== COMBAT ITEMS BAR ==== */
+.combat-items-bar {
+  display: flex;
+  gap: 16px;
+  padding: 6px 20px;
+  background: #151515;
+  border-bottom: 1px solid #333;
+  font-size: 12px;
+  grid-column: 1 / -1;
+}
+
+.combat-item-slot {
+  color: #cda;
+  white-space: nowrap;
+}
+
+.combat-item-slot {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+
+.combat-item-slot:hover {
+  background: #2a2a2a;
+}

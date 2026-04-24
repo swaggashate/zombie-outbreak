@@ -46,6 +46,17 @@
             </div>
             <span id="armor-mod-display" class="armor-mod-label">Mod: None</span>
           </div>
+          
+          <!-- Kill Milestone Bar -->
+          <div class="milestone-display">
+            <div class="bar-row">
+              <span class="bar-label" style="width:auto;">🏆</span>
+              <div class="stat-bar milestone-bar">
+                <div class="stat-bar-fill" id="milestone-bar-fill"></div>
+                <span class="stat-bar-text" id="milestone-bar-text">0 / 10</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     
@@ -56,6 +67,15 @@
           <span class="mat-item">🧪 Chemicals: <span id="mat-chemicals">0</span></span>
           <span class="mat-item">🩹 Duct Tape: <span id="mat-ductTape">0</span></span>
         </div>
+      </div>
+
+      <!-- Combat Items Display -->
+      <div class="combat-items-bar">
+        <span class="combat-item-slot">🛡️ Armor Patch: <span id="ci-armorPatch">0</span></span>
+        <span class="combat-item-slot">💉 Adrenaline: <span id="ci-adrenalineShot">0</span></span>
+        <span class="combat-item-slot">💊 Painkiller: <span id="ci-painkillerDose">0</span></span>
+        <span class="combat-item-slot">🔥 Molotov: <span id="ci-molotov">0</span></span>
+        <span class="combat-item-slot">🍖 Ration Pack: <span id="ci-rationPack">0</span></span>
       </div>
     </header>
 
@@ -245,6 +265,9 @@
         <div class="slot" data-slot="4"></div>
         <div class="slot" data-slot="5"></div>
       </div>
+
+      <h3 class="crafting-header">Crafting</h3>
+      <div id="crafting-section" class="crafting-section"></div>
 
     </aside>
 
